@@ -1,0 +1,2092 @@
+  <!DOCTYPE html>
+  <html lang="de">
+  <head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Prüfungsfragen – Angler App</title>
+
+  <style>
+  /* ======= THEME ======= */
+  :root{
+    --bg:#262626; 
+    --text:#fff; 
+    --card:#333;
+    --muted:#d9d9d9;
+    --icon:#fff;
+  }
+  html.light{
+    --bg:#e8edf1; 
+    --text:#1a111a; 
+    --muted:#555; 
+    --card:#fff;
+    --icon:#000;
+  }
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  }
+
+  /* ======= HEADER ======= */
+  header{
+    position:sticky;
+    top:0;
+    z-index:200;
+    background:var(--bg);
+    height:60px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0 16px;
+    box-shadow:0 2px 12px rgba(0,0,0,.45);
+  }
+  .bar{
+    width:min(980px,100% - 24px);
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    position:relative;
+  }
+  .title{
+    font-weight:700;
+    font-size:20px;
+    letter-spacing:.2px;
+    position:absolute;
+    left:50%;
+    transform:translateX(-50%);
+  }
+
+  /* ======= ICONS ======= */
+  .menu-btn{
+    background:transparent;
+    border:none;
+    padding:4px;
+    cursor:pointer;
+  }
+  .menu-btn img{ height:34px; }
+  .toggle{
+    background:transparent;
+    border:none;
+    padding:6px;
+    color:var(--icon);
+    cursor:pointer;
+  }
+  .toggle:hover{ background:#ffffff25; }
+  .toggle svg{ width:32px; height:32px; }
+
+  /* ====== MENU (Sidebar) ====== */
+  .overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.55);
+    opacity:0;
+    pointer-events:none;
+    transition:.25s;
+    z-index:900;
+  }
+  .overlay.open{ opacity:1; pointer-events:auto; }
+
+  .side-menu{
+    position:fixed;
+    top:0; left:0; height:100vh;
+    width:50vw; max-width:520px; min-width:280px;
+    background:#333; color:#fff; border-right:1px solid #3f3f3f;
+    transform:translateX(-100%); transition:.28s ease; z-index:1000;
+    display:flex; flex-direction:column;
+  }
+  .side-menu.open{ transform:translateX(0); }
+
+  .menu-header{
+    padding:14px 16px; display:flex; justify-content:space-between;
+    align-items:center; border-bottom:1px solid #444;
+  }
+  .menu-close{
+    background:transparent; border:1px solid #555;
+    border-radius:10px; padding:6px 10px; color:#fff; cursor:pointer;
+  }
+
+  .menu-list{ list-style:none; margin:0; padding:0; }
+  .menu-item{
+    padding:14px 16px; border-bottom:1px solid #3f3f3f; cursor:pointer;
+  }
+  .menu-item:hover{ background:#3a3a3a; }
+
+  .menu-group{
+    padding:14px 16px; border-bottom:1px solid #3f3f3f; cursor:pointer;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .menu-group:hover{ background:#3a3a3a; }
+  .caret{ transition:.25s; }
+  .submenu{
+    max-height:0; overflow:hidden; background:#2c2c2c; transition:max-height .28s ease;
+  }
+  .submenu.open{ max-height:300px; }
+  .submenu-item{
+    padding:12px 32px; border-bottom:1px solid #3f3f3f; cursor:pointer;
+  }
+  .submenu-item:hover{ background:#353535; }
+
+  /* ======= CONTENT ======= */
+  .wrap{
+    width:min(980px,100% - 24px);
+    margin:20px auto;
+    padding-top:20px;
+  }
+
+  #quiz{
+    max-width:740px;
+    margin:28px auto;
+    text-align:center;
+  }
+
+  #frageText{
+    font-size:20px;
+    font-weight:700;
+    margin-bottom:14px;
+  }
+
+  #answers{
+    display:grid;
+    gap:10px;
+    margin-top:10px;
+  }
+
+  #answers .choice{
+    background:#4c8bf5;
+    color:#fff;
+    border:none;
+    border-radius:12px;
+    padding:12px 16px;
+    cursor:pointer;
+    font-size:17px;
+    transition:.15s;
+    width:80%;
+    max-width:360px;
+    margin:0 auto;
+  }
+  #answers .choice:hover{ background:#6ea3ff; transform:translateY(-2px); }
+  #answers .choice.selected{ outline:3px solid #ffd166; }
+  #answers .choice.correct{ background:#22c55e !important; }
+  #answers .choice.wrong{ background:#c62828 !important; }
+
+  #controls{
+    margin-top:16px;
+  }
+  #btnPruefen, #btnWeiter{
+    background:#333;
+    color:#fff;
+    border:1px solid #555;
+    padding:10px 16px;
+    border-radius:10px;
+    cursor:pointer;
+    margin:6px;
+  }
+  #btnPruefen:hover, #btnWeiter:hover{ background:#3a3a3a; }
+  #btnWeiter:disabled{ opacity:.6; cursor:not-allowed; }
+
+  #result{
+    min-height:26px;
+    font-size:18px;
+    margin-top:8px;
+  }
+  </style>
+  </head>
+
+  <body>
+
+  <!-- ===== OVERLAY ===== -->
+  <div id="overlay" class="overlay"></div>
+
+  <!-- ===== SIDEBAR ===== -->
+  <nav id="sideMenu" class="side-menu" aria-label="Hauptmenü">
+    <div class="menu-header">
+      <strong>Menü</strong>
+      <button id="menuClose" class="menu-close">✕</button>
+    </div>
+
+    <ul class="menu-list">
+      <li class="menu-item" onclick="go('index.html')">🏠 Start</li>
+
+      <li class="menu-group" id="lernenToggle">
+        <span>📘 Lernen</span>
+        <span class="caret">▶</span>
+      </li>
+      <div class="submenu" id="lernenMenu">
+        <div class="submenu-item" onclick="go('fischkunde.html')">Fischkunde</div>
+        <div class="submenu-item" onclick="go('pruefungsfragen.html')">Prüfungsfragen</div>
+        <div class="submenu-item" onclick="go('rutenbau.html')">Rutenbau</div>
+      </div>
+
+      <li class="menu-item" onclick="go('schonzeiten.html')">🗓️ Schonzeiten</li>
+    </ul>
+  </nav>
+
+  <!-- ===== HEADER ===== -->
+  <header>
+    <div class="bar">
+      <button class="menu-btn" id="menuButton" aria-label="Menü öffnen">
+        <img src="img/Menü.png" alt="Menü">
+      </button>
+
+      <div class="title">Prüfungsfragen</div>
+
+      <button id="themeBtn" class="toggle" aria-label="Theme umschalten">
+        <span id="themeIcon"></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== QUIZ ===== -->
+  <main class="wrap">
+    <section id="quiz" aria-label="Prüfungsfragen Quiz">
+      <div id="frageText">Frage wird geladen…</div>
+
+      <div id="answers">
+        <button class="choice"></button>
+        <button class="choice"></button>
+        <button class="choice"></button>
+      </div>
+
+      <div id="controls">
+        <button id="btnPruefen">Prüfen</button>
+        <button id="btnWeiter" disabled>Weiter</button>
+      </div>
+
+      <p id="result"></p>
+    </section>
+  </main>
+
+  <script>
+  function go(u){ window.location.href = u; }
+
+  /* ===== Menü ===== */
+  const menuBtn  = document.getElementById("menuButton");
+  const sideMenu = document.getElementById("sideMenu");
+  const overlay  = document.getElementById("overlay");
+  const menuClose= document.getElementById("menuClose");
+
+  menuBtn.onclick   = () => { sideMenu.classList.add("open"); overlay.classList.add("open"); };
+  menuClose.onclick = () => { sideMenu.classList.remove("open"); overlay.classList.remove("open"); };
+  overlay.onclick   = () => { sideMenu.classList.remove("open"); overlay.classList.remove("open"); };
+
+  /* ===== Dropdown ===== */
+  const lernenToggle = document.getElementById("lernenToggle");
+  const lernenMenu   = document.getElementById("lernenMenu");
+  const caret        = lernenToggle.querySelector(".caret");
+
+  lernenToggle.onclick = () => {
+    lernenMenu.classList.toggle("open");
+    caret.style.transform = lernenMenu.classList.contains("open") ? "rotate(90deg)" : "rotate(0deg)";
+  };
+
+  /* ===== Theme ===== */
+  (function(){
+    const saved = localStorage.getItem("theme") || "dark";
+    document.documentElement.classList.add(saved);
+    setIcon(saved);
+
+    document.getElementById("themeBtn").onclick = () => {
+      const now = document.documentElement.classList.contains("dark") ? "light" : "dark";
+      document.documentElement.classList.remove("dark","light");
+      document.documentElement.classList.add(now);
+      localStorage.setItem("theme", now);
+      setIcon(now);
+    };
+
+    function setIcon(mode){
+      document.getElementById("themeIcon").innerHTML =
+        mode === "dark"
+        ? '<svg viewBox="0 0 24 24" fill="none" stroke="var(--icon)" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/></svg>'
+        : '<svg viewBox="0 0 24 24" fill="var(--icon)"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+    }
+  })();
+
+  /* ====== Probeprüfung 1 ====== */
+
+  const fragen = [
+   {
+  frage: "Welche Aufgaben erfüllen Rücken- und Afterflossen einheimischer Fische?",
+  antworten: ["Sie dienen als Stabilisatoren", "Sie dienen der Steuerung", "Sie dienen der Fortbewegung"],
+  korrekt: 0,
+  kategorie: "Allgemeine Fischkunde"
+},
+{
+  frage: "An welchen Teilen des Fischkörpers kann man das ungefähre Alter des Fisches feststellen?",
+  antworten: ["An den Schuppen und den Kiemendeckeln", "An der Anzahl und Länge der Kiemendorne", "An der Stärke der Haut und an der Anzahl der Flossenstrahlen"],
+  korrekt: 0,
+  kategorie: "Allgemeine Fischkunde"
+},
+{
+  frage: "Womit nimmt der Fisch Sauerstoff auf?",
+  antworten: ["Mit den Kiemen", "Mit der Seitenlinie", "Mit dem Schlund"],
+  korrekt: 0,
+  kategorie: "Allgemeine Fischkunde"
+},
+{
+  frage: "Welche Aufgabe hat die Niere des erwachsenen Fisches?",
+  antworten: ["Sie dient der Ausscheidung flüssiger Abfallstoffe", "Sie regelt den Hormonhaushalt", "Sie bildet Verdauungsstoffe"],
+  korrekt: 0,
+  kategorie: "Allgemeine Fischkunde"
+},
+{
+  frage: "Wo befindet sich die Seitenlinie des Fisches?",
+  antworten: ["Zwischen den paarigen Flossen", "Längs der Bauchkante", "An den Körperflanken"],
+  korrekt: 2,
+  kategorie: "Allgemeine Fischkunde"
+},
+{
+  frage: "Warum können Makrelen nicht im Süßwasser leben?",
+  antworten: ["Weil der Sauerstoffgehalt im Süßwasser zu gering ist", "Weil es im Süßwasser zu warm ist", "Weil sie als Meeresfische an den Salzgehalt des Meeres gebunden sind"],
+  korrekt: 2,
+  kategorie: "Allgemeine Fischkunde"
+},
+{
+  frage: "Welche Farbe hat die Leber des gesunden Süßwasserfisches?",
+  antworten: ["Überwiegend dunkelrot", "Hellrot", "Weißlich bis gelblich"],
+  korrekt: 0,
+  kategorie: "Allgemeine Fischkunde"
+},
+{
+  frage: "Welche Aufgabe hat die Schleimhaut?",
+  antworten: ["Sie gibt den Schuppen Halt", "Sie ist für die Färbung des Fisches verantwortlich", "Sie schützt den Fisch gegen äußere Einflüsse und vermindert den Reibungswiderstand des Fischkörpers beim Schwimmen"],
+  korrekt: 2,
+  kategorie: "Allgemeine Fischkunde"
+},
+{
+  frage: "Welche der nachstehenden Fische sind hochrückig?",
+  antworten: ["Brassen", "Welse", "Hechte"],
+  korrekt: 0,
+  kategorie: "Allgemeine Fischkunde"
+},
+{
+  frage: "Welche Fische haben Schlundzähne?",
+  antworten: ["Forellen, Hechte und Zander", "Brassen, Rotfedern und Karpfen", "Dorsche, Streber und Barsche"],
+  korrekt: 1,
+  kategorie: "Allgemeine Fischkunde"
+},
+{
+  frage: "Welche Arten gehören zu den Rundmäulern?",
+  antworten: ["Bach- und Flussneunaugen", "Störe", "Weißfische, Barsche und Forellen"],
+  korrekt: 0,
+  kategorie: "Spezielle Fischkunde"
+},
+{
+  frage: "Welcher Fisch hat keine Bauchflosse?",
+  antworten: ["Der Aal", "Die Quappe (Rutte)", "Die Koppe"],
+  korrekt: 0,
+  kategorie: "Spezielle Fischkunde"
+},
+{
+  frage: "Wie verhalten sich Stichlinge während der Laichphase?",
+  antworten: ["Die Männchen bauen ein Nest, in das mehrere Weibchen ihre Eier ablegen", "Sie legen ihre Eier in Muscheln ab", "Sie legen ihre Eier an der Unterseite großblättriger Wasserpflanzen ab"],
+  korrekt: 0,
+  kategorie: "Spezielle Fischkunde"
+},
+{
+  frage: "Welche Fischarten sind Kieslaicher?",
+  antworten: ["Der Wels und der Aal", "Der Bachsaibling und die Bachforelle", "Die Brasse und der Hecht"],
+  korrekt: 1,
+  kategorie: "Spezielle Fischkunde"
+},
+{
+  frage: "Zu welcher Maulform sind folgende Fischarten richtig eingeordnet?",
+  antworten: ["Endständiges Maul: Flussbarsch, Zander und Ukelei", "Unterständiges Maul: Nase, Barbe und Gründling", "Oberständiges Maul: Karpfen, Schleie und Zander"],
+  korrekt: 1,
+  kategorie: "Spezielle Fischkunde"
+},
+{
+  frage: "Welche Fischarten haben keine Schwimmblase?",
+  antworten: ["Die Mühlkoppe und die Makrele", "Der Karpfen und der Zander", "Der Hecht und der Flussbarsch"],
+  korrekt: 0,
+  kategorie: "Spezielle Fischkunde"
+},
+{
+  frage: "Welcher Fisch hat eine zweikammerige Schwimmblase?",
+  antworten: ["Die Regenbogenforelle", "Der Hecht", "Das Rotauge (Plötze)"],
+  korrekt: 2,
+  kategorie: "Spezielle Fischkunde"
+},
+{
+  frage: "Welche der genannten Fischarten hat den höchsten Sauerstoffbedarf?",
+  antworten: ["Die Schleie", "Der Aal", "Die Bachforelle"],
+  korrekt: 2,
+  kategorie: "Spezielle Fischkunde"
+},
+{
+  frage: "Welche der drei Merkmalsgruppen trifft auf unsere karpfenartigen Fische zu?",
+  antworten: [
+      "Kopf schuppenlos, Kiefer unbezahnt, Schlundzähne vorhanden, zweikammerige Schwimmblase",
+      "Fettflosse vorhanden, Kiemenreusendornen sehr zahlreich, Pflugscharbein bezahnt, Kopf schuppenlos",
+      "Kopf mit Schuppen, bezahnte Kiefer, Schlundzähne, zweikammerige Schwimmblase"
+  ],
+  korrekt: 0,
+  kategorie: "Spezielle Fischkunde"
+},
+{
+  frage: "Wie kann man aufgrund der äußeren Merkmale Karpfen und Karauschen eindeutig unterscheiden?",
+  antworten: ["Der Karpfen hat Bartfäden, die Karausche keine", "An der Länge der Rückenflosse", "An der Beschuppung"],
+  korrekt: 0,
+  kategorie: "Spezielle Fischkunde"
+},
+{
+  frage: "Ist der Sauerstoffgehalt in fließenden Gewässern gewöhnlich höher oder niedriger als in stehenden Gewässern?",
+  antworten: [
+      "Er ist höher, da durch die Verwirbelung des Wassers mit der Luft ständig Sauerstoff aufgenommen und bis zum Grund verteilt wird",
+      "Er ist niedriger wegen der höheren Wassertemperatur",
+      "Es besteht kein Unterschied, da die Aufnahmefähigkeit des Wassers für Sauerstoff immer gleich ist"
+  ],
+  korrekt: 0,
+  kategorie: "Gewässerkunde"
+},
+{
+  frage: "Wie ist die richtige Reihenfolge der fischereibiologischen Regionen der Fließgewässer?",
+  antworten: [
+      "Forellenregion – Barbenregion – Kaulbarsch/Flunderregion – Äschenregion – Brassregion",
+      "Forellenregion – Äschenregion – Barbenregion – Brassregion – Kaulbarsch/Flunderregion",
+      "Äschenregion – Barbenregion – Brassregion – Forellenregion – Kaulbarsch/Flunderregion"
+  ],
+  korrekt: 1,
+  kategorie: "Gewässerkunde"
+},
+{
+  frage: "Reagiert die Tierwelt der Bäche besonders empfindlich auf Sauerstoffmangel?",
+  antworten: [
+      "Ja, weil bei Sauerstoffmangel die pH-Werte zu sehr steigen",
+      "Nein, weil sie sich auch bei Sauerstoffmangel ungehindert vermehren kann",
+      "Ja, weil sie an die in Bächen gewöhnlich hohe Sauerstoffkonzentration angepasst ist"
+  ],
+  korrekt: 2,
+  kategorie: "Gewässerkunde"
+},
+{
+  frage: "Wo leben die Fischnährtiere der Gebirgsbäche?",
+  antworten: ["Im Wasser schwimmend", "Auf, zwischen und unter den Steinen", "An der Oberfläche des Wassers"],
+  korrekt: 1,
+  kategorie: "Gewässerkunde"
+},
+{
+  frage: "Hat die Gestalt des Bodenuntergrundes fischereibiologische Bedeutung?",
+  antworten: ["Nein", "Ja, da unregelmäßiger Untergrund, Untiefen und Kolke vor allem Parasiten geeignete Unterschlupf bieten", "Ja, da unregelmäßiger Untergrund, Untiefen, Kolke und Lücken zwischen den Steinen bodenbesiedelnden Lebewesen vielfältige Entwicklungsmöglichkeiten bieten"],
+  korrekt: 2,
+  kategorie: "Gewässerkunde"
+},
+{
+  frage: "Wie gelangen unter natürlichen Verhältnissen die meisten Pflanzennährstoffe in die Fließgewässer?",
+  antworten: ["Sie entstehen im Gewässer von selbst", "Durch Auswaschung aus landwirtschaftlichen Nutzflächen", "Mit dem Quellwasser aus dem Erdinneren"],
+  korrekt: 1,
+  kategorie: "Gewässerkunde"
+},
+{
+  frage: "Haben die Pflanzennährstoffe in Gewässern fischereibiologische Bedeutung?",
+  antworten: [
+      "Nein, sie haben keine Bedeutung, da sie für die Fische wertlos sind",
+      "Ja, sie sind Vorbedingung der Pflanzenentwicklung, diese wiederum ist Grundlage der Tierernährung",
+      "Ja, Pflanzennährstoffe wirken auch in geringer Konzentration auf Fische nachteilig"
+  ],
+  korrekt: 1,
+  kategorie: "Gewässerkunde"
+},
+{
+  frage: "Womit beginnt die Nahrungskette in Gewässern?",
+  antworten: ["Mit kleinen Fischarten", "Mit einzelligen Algen, mehrzelligen Algen und Unterwasserpflanzen", "Mit den Insektenlarven der Forellenregion"],
+  korrekt: 1,
+  kategorie: "Gewässerkunde"
+},
+{
+  frage: "Können Abwassereinleitungen biologische Schäden in Gewässern verursachen?",
+  antworten: [
+      "Nein, weil sich Tiere und Pflanzen daran anpassen",
+      "Nein, weil die Selbstreinigungskraft der Gewässer unbegrenzt ist",
+      "Ja, weil die Tier- und Pflanzenwelt vor allem kleinerer Gewässer auf Umweltveränderungen besonders empfindlich reagiert"
+  ],
+  korrekt: 2,
+  kategorie: "Gewässerkunde"
+},
+{
+  frage: "Welche biologische Funktion hat der im Wasser gelöste Sauerstoff?",
+  antworten: ["Er wird für die Atmung der Wasserorganismen benötigt", "Er neutralisiert alkalische Abwässer", "Er neutralisiert saure Abwässer"],
+  korrekt: 0,
+  kategorie: "Gewässerkunde"
+},
+{
+  frage: "Was ist unter Fluchtdistanz zu verstehen?",
+  antworten: [
+      "Die im Castingsport beim Werfen erzielte Weite",
+      "Die von einem gehakten Fisch während der Drillphase zurückgelegte Distanz",
+      "Die Entfernung, ab welcher ein Tier vor einem wirklichen oder vermeintlichen Feind flüchtet"
+  ],
+  korrekt: 2,
+  kategorie: "Natur-, Tier- und Umweltschutz"
+},
+{
+  frage: "Welche Maßnahmen sind u. a. für den Schutz des Eisvogels erforderlich?",
+  antworten: [
+      "Besatz aller Gewässer mit kleinen Goldorfen",
+      "Einbringen von Pfählen ins Wasser, damit der Vogel dort auf Beute lauern kann",
+      "Schaffung von Steilufern und Schutz geeigneter Nistbereiche"
+  ],
+  korrekt: 2,
+  kategorie: "Natur-, Tier- und Umweltschutz"
+},
+{
+  frage: "Welche Wasserinsektenart ist gesetzlich geschützt?",
+  antworten: ["Keine", "Der Kolbenwasserkäfer", "Die Rote Zuckmückenlarve"],
+  korrekt: 1,
+  kategorie: "Natur-, Tier- und Umweltschutz"
+},
+{
+  frage: "Was hat nach dem Landen eines maßigen und verwertbaren Fisches sofort zu geschehen?",
+  antworten: ["Entfernen des Angelhakens", "Betäuben und Töten", "Wiegen und Längenmessung"],
+  korrekt: 1,
+  kategorie: "Natur-, Tier- und Umweltschutz"
+},
+{
+  frage: "Wie wird der Fisch waidgerecht getötet?",
+  antworten: [
+      "Durch einen Schlag auf den Gehirnschädel und durch Herzstich",
+      "Durch Einschnitt an der Schwanzwurzel",
+      "Der Fisch bleibt auf dem Land, bis er erstickt ist"
+  ],
+  korrekt: 0,
+  kategorie: "Natur-, Tier- und Umweltschutz"
+},
+{
+  frage: "Welches Instrument wird zur Tötung des Fisches benutzt?",
+  antworten: ["Jeder beliebige Gegenstand", "Ein Stein", "Schlagholz und Messer"],
+  korrekt: 2,
+  kategorie: "Natur-, Tier- und Umweltschutz"
+},
+{
+  frage: "Gefährden Molchlarven und Kaulquappen Fischbrut?",
+  antworten: ["Nein", "Ja, sie übertragen gefährliche Außenparasiten", "Ja, sie leben ausschließlich von Fischbrut"],
+  korrekt: 0,
+  kategorie: "Natur-, Tier- und Umweltschutz"
+},
+{
+  frage: "Was tut man, wenn der Fisch den Angelhaken zu tief geschluckt hat?",
+  antworten: [
+      "Der Haken wird im Fischkörper belassen, bis der Fisch erstickt ist",
+      "Der Fisch wird sofort waidgerecht getötet",
+      "Der Haken wird unter Kraftaufwendung aus dem Fisch entfernt"
+  ],
+  korrekt: 1,
+  kategorie: "Natur-, Tier- und Umweltschutz"
+},
+{
+  frage: "Was macht man, wenn man einen untermaßigen Fisch gefangen hat?",
+  antworten: [
+    "Man löst den Fisch vorsichtig mit nassen Händen vom Haken und setzt ihn ins Wasser zurück",
+    "Man schneidet die Schnur durch und lässt den Fisch frei",
+    "Man hält den Fisch mit einem trockenen Tuch und löst ihn vorsichtig vom Haken"
+  ],
+  korrekt: 0,
+  kategorie: "Natur-, Tier- und Umweltschutz"
+},
+{
+  frage: "Was ist zu tun, wenn sich in einem Gewässer große Bestände der Weißen Seerose oder der Gelben Teichrose angesiedelt haben?",
+  antworten: [
+    "Die Bestände dieser Pflanzen sind zu entfernen",
+    "Die genannten Pflanzen sind gesetzlich geschützt und dürfen nicht entfernt werden",
+    "Das Gedeihen dieser Pflanzen ist durch Düngung zu fördern"
+  ],
+  korrekt: 1,
+  kategorie: "Natur-, Tier- und Umweltschutz"
+},
+{
+  frage: "Welche Eigenschaften sollte eine Angelrute haben?",
+  antworten: [
+    "Man muss mit ihr gut werfen und den Fisch sicher landen können",
+    "Sie muss grundsätzlich eine weiche Spitzenaktion haben",
+    "Sie muss einen extrem langen Korkgriff haben"
+  ],
+  korrekt: 0,
+  kategorie: "Gerätekunde"
+},
+{
+  frage: "Welcher Schnurring einer Rute ist am stärksten belastet?",
+  antworten: [
+    "Der Spitzenring",
+    "Alle Ringe",
+    "Der erste Ring nach der Rolle"
+  ],
+  korrekt: 0,
+  kategorie: "Gerätekunde"
+},
+{
+  frage: "Wodurch unterscheidet sich der Rutengriff einer Spinnrute von einer Fliegenrute?",
+  antworten: [
+    "Durch unterschiedliche Längen",
+    "Durch eine Ausbuchtung für den Daumen",
+    "Durch die Anbringung des Rollenhalters vor oder hinter der Wurfhand"
+  ],
+  korrekt: 2,
+  kategorie: "Gerätekunde"
+},
+{
+  frage: "Welche der drei Rollentypen (Stationär-, Multi-, Nottinghamrolle) werden heute noch verwendet?",
+  antworten: [
+    "Die Multirolle",
+    "Die Stationär- und die Nottinghamrolle",
+    "Alle drei"
+  ],
+  korrekt: 2,
+  kategorie: "Gerätekunde"
+},
+{
+  frage: "Wodurch unterscheidet sich die Stationärrolle von der Multi- und der Nottinghamrolle?",
+  antworten: [
+    "Durch ihr Gewicht",
+    "Durch größeres Schnurfassungsvermögen",
+    "Die Rollenachse steht parallel zum Rutenschaft"
+  ],
+  korrekt: 2,
+  kategorie: "Gerätekunde"
+},
+{
+  frage: "Für welche Fangmethoden eignet sich die Stationärrolle besonders gut?",
+  antworten: [
+    "Für die leichte und mittlere Spinnfischerei und für das Grundangeln",
+    "Für das Fliegenfischen",
+    "Sie eignet sich gleich gut für alle Fangmethoden"
+  ],
+  korrekt: 0,
+  kategorie: "Gerätekunde"
+},
+{
+  frage: "Für welche Angelmethoden eignet sich die Multirolle?",
+  antworten: [
+    "Für die schwere Spinnfischerei, für das Schlepp- und für das Grundangeln",
+    "Für die Stippangelei",
+    "Sie eignet sich gleich gut für alle"
+  ],
+  korrekt: 0,
+  kategorie: "Gerätekunde"
+},
+{
+  frage: "Für welche Angelmethoden sind Multi- und Stationärrollen nicht geeignet?",
+  antworten: [
+    "Für die Fliegenangelei",
+    "Für die Grundangelei",
+    "Für die Stippangelei"
+  ],
+  korrekt: 0,
+  kategorie: "Gerätekunde"
+},
+{
+  frage: "Welchen Einfluss haben Knoten auf die Reißfestigkeit der Schnur?",
+  antworten: [
+    "Sie vermindern die Reißfestigkeit",
+    "Sie sind besonders reißfest",
+    "Sie haben keinen Einfluss"
+  ],
+  korrekt: 0,
+  kategorie: "Gerätekunde"
+},
+{
+  frage: "Wodurch entsteht hauptsächlich Schnurdrall?",
+  antworten: [
+    "Durch ständiges Werfen",
+    "Nur durch Stationärrollen",
+    "Durch stark wirbelnde Köder"
+  ],
+  korrekt: 2,
+  kategorie: "Gerätekunde"
+},
+{
+  frage: "Was versteht man unter einem Mindestmaß?",
+  antworten: [
+    "Die Länge der Satzfische",
+    "Die Länge der Laichfische",
+    "Die Länge der Fische, ab welcher diese gefangen werden dürfen"
+  ],
+  korrekt: 2,
+  kategorie: "Gesetzeskunde"
+},
+{
+  frage: "Welcher Grundsatz sollte für den Umgang mit Fischen gelten?",
+  antworten: [
+    "Für Fische gilt das Tierschutzgesetz nicht",
+    "Keinem Fisch dürfen ohne vernünftigen Grund Schmerzen und/oder Leiden zugefügt werden",
+    "Zur Schonung der Fische sollten diese nach der Anlandung grundsätzlich nur mit einem trockenen Tuch angefasst werden"
+  ],
+  korrekt: 1,
+  kategorie: "Gesetzeskunde"
+},
+{
+  frage: "Welches Mindestmaß hat der Aal?",
+  antworten: [
+    "Das Mindestmaß beträgt 25 cm",
+    "Das Mindestmaß beträgt 50 cm",
+    "Das Mindestmaß beträgt 35 cm"
+  ],
+  korrekt: 1,
+  kategorie: "Gesetzeskunde"
+},
+{
+  frage: "Kann einer Person vor Vollendung des 14. Lebensjahres der Fischereischein ausgestellt werden?",
+  antworten: [
+    "Ja, wenn der Fischfang in Anwesenheit eines Erwachsenen ausgeübt werden soll",
+    "Nein, nur der Jugendfischereischein",
+    "Ja, ohne Beschränkung"
+  ],
+  korrekt: 1,
+  kategorie: "Gesetzeskunde"
+},
+{
+  frage: "Wer stellt einen Fischereierlaubnisschein aus?",
+  antworten: [
+    "Der Fischereiberechtigte oder der Fischereipächter",
+    "Das Landesamt für Naturschutz, Umwelt und Verbraucherschutz",
+    "Die Fischereibehörde"
+  ],
+  korrekt: 0,
+  kategorie: "Gesetzeskunde"
+},
+{
+  frage: "Darf ein Fischereiberechtigter oder Pächter die Fischerei an einem mehr als 0,5 ha großen Gewässer allein ausüben?",
+  antworten: [
+    "Ja, ohne Einschränkung",
+    "Nein, er muss eine angemessene Zahl Erlaubnisscheine ausstellen",
+    "Ja, wenn das Gewässer umzäunt ist und nicht zum Haus- und Hofbereich gehört"
+  ],
+  korrekt: 1,
+  kategorie: "Gesetzeskunde"
+},
+{
+  frage: "Darf man an einem Gewässer, in dem man nicht fischereiausübungsberechtigt ist, Fischereigeräte mit sich führen?",
+  antworten: [
+    "Nein",
+    "Ja, ohne Einschränkung",
+    "Ja, im verpackten, d. h. nicht gebrauchsfähigen Zustand"
+  ],
+  korrekt: 2,
+  kategorie: "Gesetzeskunde"
+},
+{
+  frage: "Ist die Fischerei mit elektrischen Geräten verboten?",
+  antworten: [
+    "Ja, jedoch kann sie unter Auflagen und Bedingungen genehmigt werden",
+    "Nein, sie ist ohne Einschränkung gestattet",
+    "Nur in fließenden Gewässern"
+  ],
+  korrekt: 0,
+  kategorie: "Gesetzeskunde"
+},
+{
+  frage: "Welche Aufgaben hat ein amtlich verpflichteter Fischereiaufsichtser?",
+  antworten: [
+    "Er hat zu überprüfen, ob die Fischerei nach den gesetzlichen Vorschriften erfolgt",
+    "Er hat darauf zu achten, dass die Angler in möglichst weitem Abstand voneinander fischen",
+    "Er hat dem Fischereiberechtigten oder -pächter monatlich mitzuteilen, wieviel Personen die Fischerei ausgeübt haben"
+  ],
+  korrekt: 0,
+  kategorie: "Gesetzeskunde"
+},
+{
+  frage: "Darf sich der Eigentümer oder Nutzungsberechtigte überfluteter Grundstücke auf diesen Grundstücken Fische aneignen?",
+  antworten: [
+    "Ja, sobald das Wasser auf dem überfluteten Grundstück länger als eine Woche mit dem Fluss nicht mehr in Verbindung steht",
+    "Nein",
+    "Ja, aber nur mit Genehmigung der örtlichen Ordnungsbehörde"
+  ],
+  korrekt: 0,
+  kategorie: "Gesetzeskunde"
+}
+
+,{
+    frage: "Welche Flosse ist beim Fisch paarig vorhanden?",
+    antworten: [
+      "Die Fettflosse",
+      "Die Schwanzflosse",
+      "Die Brustflosse"
+    ],
+    korrekt: 2,
+    kategorie: "Allgemeine Fischkunde"
+  },
+  {
+    frage: "Wozu dient den Fischen die Seitenlinie?",
+    antworten: [
+      "Als Sinnesorgan",
+      "Zur Erhöhung der Sauerstoffaufnahme",
+      "Sie hat keine spezielle Funktion"
+    ],
+    korrekt: 0,
+    kategorie: "Allgemeine Fischkunde"
+  },
+  {
+    frage: "Welche Funktion hat die Schwimmblase?",
+    antworten: [
+      "Sie dient als Auftriebskörper",
+      "Sie dient der Ausscheidung",
+      "Sie dient der Verdauung"
+    ],
+    korrekt: 0,
+    kategorie: "Allgemeine Fischkunde"
+  },
+  {
+    frage: "Wie kann der Fisch seine Sauerstoffaufnahme vergrößern?",
+    antworten: [
+      "Durch Abspreizen der Kiemendeckel",
+      "Durch die Vermehrung der Atembewegungen",
+      "Durch das Spreizen der Flossen"
+    ],
+    korrekt: 1,
+    kategorie: "Allgemeine Fischkunde"
+  },
+  {
+    frage: "Kann ein Fisch Gegenstände außerhalb des Wassers sehen?",
+    antworten: [
+      "Nein, überhaupt nicht",
+      "Ja, das Gesichtsfeld außerhalb des Wassers wird vergrößert",
+      "Ja, aber mit kleinerem Gesichtsfeld"
+    ],
+    korrekt: 2,
+    kategorie: "Allgemeine Fischkunde"
+  },
+  {
+    frage: "Was ist ein Milchner?",
+    antworten: [
+      "Eine bestimmte Fischart",
+      "Eine süddeutsche Karpfenrasse",
+      "Ein reifer männlicher Fisch"
+    ],
+    korrekt: 2,
+    kategorie: "Allgemeine Fischkunde"
+  },
+  {
+    frage: "Was versteht man unter einem Rogner?",
+    antworten: [
+      "Die Larve von Heringsfischen",
+      "Den reifen weiblichen Fisch",
+      "Ein altes Forellenmännchen"
+    ],
+    korrekt: 1,
+    kategorie: "Allgemeine Fischkunde"
+  },
+  {
+    frage: "Welche Bedeutung haben Wasserflöhe, Hüpferlinge und andere Zooplankter für die Fische?",
+    antworten: [
+      "Sie sind wichtige Sauerstoffproduzenten",
+      "Sie haben keine Bedeutung",
+      "Sie sind wertvolle Fischnahrung"
+    ],
+    korrekt: 2,
+    kategorie: "Allgemeine Fischkunde"
+  },
+  {
+    frage: "Worauf lässt das oberständige Maul eines Fisches schließen?",
+    antworten: [
+      "Der Fisch ist ein starker Räuber",
+      "Der Fisch frisst Oberflächennahrung",
+      "Der Fisch ist ein Laichfresser"
+    ],
+    korrekt: 1,
+    kategorie: "Allgemeine Fischkunde"
+  },
+  {
+    frage: "Wozu kann man bei bestimmten Fischen die Fettflosse heranziehen?",
+    antworten: [
+      "Zur Bestimmung des Geschlechtes beim Döbel",
+      "Zur Artbestimmung",
+      "Zur Abschätzung des Ernährungszustandes"
+    ],
+    korrekt: 1,
+    kategorie: "Allgemeine Fischkunde"
+  },
+  {
+    frage: "Welcher Fisch besitzt nur einen Bartfaden?",
+    antworten: [
+      "Die Schleie",
+      "Die Quappe (Rutte)",
+      "Die Barbe"
+    ],
+    korrekt: 1,
+    kategorie: "Spezielle Fischkunde"
+  },
+  {
+    frage: "Welcher Fisch hat vier Bartfäden?",
+    antworten: [
+      "Die Schleie",
+      "Die Karausche",
+      "Die Barbe"
+    ],
+    korrekt: 2,
+    kategorie: "Spezielle Fischkunde"
+  },
+  {
+    frage: "Wieviel Bartfäden hat der Europäische Wels?",
+    antworten: [
+      "Vier",
+      "Sechs",
+      "Acht"
+    ],
+    korrekt: 1,
+    kategorie: "Spezielle Fischkunde"
+  },
+  {
+    frage: "Welche der folgenden Fischgruppen gehört zu den Karpfenartigen?",
+    antworten: [
+      "Gründling, Elritze, Barbe",
+      "Zander, Aland, Schleie",
+      "Nase, Karpfen, Quappe (Rutte)"
+    ],
+    korrekt: 0,
+    kategorie: "Spezielle Fischkunde"
+  },
+  {
+    frage: "An welchen äußeren Merkmalen kann man bei der Schleie das Geschlecht eindeutig erkennen, nachdem sie fortpflanzungsfähig geworden ist?",
+    antworten: [
+      "An der Rückenflosse",
+      "An der Färbung",
+      "An den Bauchflossen"
+    ],
+    korrekt: 2,
+    kategorie: "Spezielle Fischkunde"
+  },
+  {
+    frage: "Wieviel Bartfäden hat die Schleie?",
+    antworten: [
+      "Vier",
+      "Keine",
+      "Zwei"
+    ],
+    korrekt: 2,
+    kategorie: "Spezielle Fischkunde"
+  },
+  {
+    frage: "Wo hält sich die Schleie vorzugsweise auf, nachdem sie fortpflanzungsfähig geworden ist?",
+    antworten: [
+      "An der Oberfläche",
+      "Im Freiwasserraum",
+      "Zwischen Pflanzen am Bodengrund"
+    ],
+    korrekt: 2,
+    kategorie: "Spezielle Fischkunde"
+  },
+  {
+    frage: "Wann laichen Schleien?",
+    antworten: [
+      "Von Oktober bis Dezember",
+      "Von Januar bis Februar",
+      "Von Mai bis Juli"
+    ],
+    korrekt: 2,
+    kategorie: "Spezielle Fischkunde"
+  },
+  {
+    frage: "Wann laichen Karpfen?",
+    antworten: [
+      "Von Oktober bis Dezember",
+      "Von Januar bis März",
+      "Von Mai bis Juli"
+    ],
+    korrekt: 2,
+    kategorie: "Spezielle Fischkunde"
+  },
+  {
+    frage: "Wieviel Eier hat der Karpfen pro kg Körpergewicht?",
+    antworten: [
+      "20 000 bis 50 000 Stück",
+      "1 500 bis 2 500 Stück",
+      "100 000 bis 300 000 Stück"
+    ],
+    korrekt: 2,
+    kategorie: "Spezielle Fischkunde"
+  },
+  {
+    frage: "In welchen Zonen stehender Gewässer kommt es am ehesten zu Sauerstoffmangel?",
+    antworten: [
+      "In der Tiefe",
+      "Im Uferbereich",
+      "An der Oberfläche"
+    ],
+    korrekt: 0,
+    kategorie: "Gewässerkunde"
+  },
+  {
+    frage: "Welche höheren Wasserpflanzen sind besonders günstig für die Sauerstoffversorgung stehender Gewässer?",
+    antworten: [
+      "Die Schwimmblattpflanzen (z.B. Seerosen)",
+      "Die 'harte' Flora (Schilf, Rohr)",
+      "Die untergetauchte 'weiche' Flora (Laichkräuter, Tausendblatt, Wasserpest)"
+    ],
+    korrekt: 2,
+    kategorie: "Gewässerkunde"
+  },
+  {
+    frage: "Wie gelangt Sauerstoff in das Wasser?",
+    antworten: [
+      "Durch Verwitterung der Bodenteilchen",
+      "Durch Sauerstoffabgabe der grünen Pflanzen und durch Sauerstoffaufnahme aus der Luft",
+      "Durch Fäulnis abgestorbener Organismen"
+    ],
+    korrekt: 1,
+    kategorie: "Gewässerkunde"
+  },
+  {
+    frage: "Warum kann es besonders in stehenden Gewässern unter dem Eis zum Ersticken der Fische kommen?",
+    antworten: [
+      "Weil die Sauerstoffaufnahme aus der Luft unmöglich ist",
+      "Weil der Stickstoffgehalt zu hoch wird",
+      "Weil die Wassertemperaturen zu niedrig sind"
+    ],
+    korrekt: 0,
+    kategorie: "Gewässerkunde"
+  },
+  {
+    frage: "Was ist Voraussetzung für die Sauerstoffentwicklung durch grüne Pflanzen?",
+    antworten: [
+      "Eine Wassertemperatur über 10°C",
+      "Ein hoher Nährstoffgehalt",
+      "Das Sonnenlicht"
+    ],
+    korrekt: 2,
+    kategorie: "Gewässerkunde"
+  },
+  {
+    frage: "Welche Organismen können Sauerstoff abgeben?",
+    antworten: [
+      "Die Insektenlarven",
+      "Die grünen Pflanzen",
+      "Das tierische Plankton"
+    ],
+    korrekt: 1,
+    kategorie: "Gewässerkunde"
+  },
+  {
+    frage: "Welche Stoffe haben besondere Bedeutung als Pflanzennährstoffe in Gewässern?",
+    antworten: [
+      "Wasserstoff und Sauerstoff",
+      "Sand und Kies",
+      "Phosphor und Stickstoff"
+    ],
+    korrekt: 2,
+    kategorie: "Gewässerkunde"
+  },
+  {
+    frage: "Warum bildet sich in stehenden Gewässern eine Temperaturschichtung der Wassermassen?",
+    antworten: [
+      "Weil das auf 18°C erwärmte Wasser schwerer ist als kälteres",
+      "Weil das Tiefenwasser durch die Erdwärme aufgeheizt wird",
+      "Weil das erwärmte Oberflächenwasser leichter ist"
+    ],
+    korrekt: 2,
+    kategorie: "Gewässerkunde"
+  },
+  {
+    frage: "Welche Organismen können auch in den lichtlosen Tiefenzonen von Seen dauernd leben?",
+    antworten: [
+      "Pflanzliches Plankton",
+      "Höhere Wasserpflanzen",
+      "Bakterien"
+    ],
+    korrekt: 2,
+    kategorie: "Gewässerkunde"
+  },
+  {
+    frage: "Durch welche natürlichen Vorgänge kann der Sauerstoffgehalt in stehenden Gewässern unter das für Fische erträgliche Maß absinken?",
+    antworten: [
+      "Durch erhöhten Sauerstoffverbrauch beim Ablaichen der Fische",
+      "Durch massenhaftes Ausschlüpfen von Wasserinsekten",
+      "Durch Sauerstoffverbrauch bei Nacht infolge starker Pflanzenatmung (Dissimilation)"
+    ],
+    korrekt: 2,
+    kategorie: "Gewässerkunde"
+  },
+{
+  frage: "Welche der genannten Vogelarten sind stark gefährdet?",
+  antworten: ["Zwergtaucher und Großer Brachvogel", "Stockente und Lachmöwe", "Höckerschwan und Blessralle"],
+  korrekt: 0,
+  kategorie: "Natur-, Tier- und Umweltschutz"
+},
+{
+  frage: "Wo kann man sich informieren, welche Tiere und Pflanzen in Nordrhein-Westfalen gefährdet sind?",
+  antworten: ["In der sogenannten Roten Liste", "In der Landesfischereiverordnung", "Im Landesfischereigesetz"],
+  korrekt: 0,
+  kategorie: "Natur-, Tier- und Umweltschutz"
+},
+{
+  frage: "Wie wird der untermaßige Fisch behandelt?",
+  antworten: [
+    "Man nimmt ihn schnell vom Haken und wirft ihn ins Wasser zurück",
+    "Man setzt ihn vorerst in einen Setzkescher",
+    "Man fasst ihn mit nassen Händen an, entfernt den Haken vorsichtig und setzt den Fisch ins Wasser zurück"
+  ],
+  korrekt: 2,
+  kategorie: "Natur-, Tier- und Umweltschutz"
+},
+{
+  frage: "Wo legen Molche ihre Eier ab?",
+  antworten: ["In großen Flüssen und Kanälen", "In feuchten Laubwäldern", "In Tümpeln und Gräben"],
+  korrekt: 2,
+  kategorie: "Natur-, Tier- und Umweltschutz"
+},
+{
+  frage: "Ist die Beseitigung von Tümpeln und anderen Kleingewässern eine naturfeindliche Maßnahme?",
+  antworten: [
+    "Nein, weil wertvolle landwirtschaftliche Produktionsflächen gewonnen werden",
+    "Nein, weil hierdurch gefährliche Brutstätten von Stechmücken vernichtet werden",
+    "Ja, weil der Lebensraum für viele Tiere und Pflanzen zerstört wird"
+  ],
+  korrekt: 2,
+  kategorie: "Natur-, Tier- und Umweltschutz"
+},
+{
+  frage: "Warum suchen Kröten im Frühjahr kleine Gewässer auf?",
+  antworten: [
+    "Weil sie im Wasser ihren Laich absetzen wollen",
+    "Weil sie in der sommerlichen Hitze vertrocknen würden",
+    "Weil sie wenig standorttreu sind"
+  ],
+  korrekt: 0,
+  kategorie: "Natur-, Tier- und Umweltschutz"
+},
+
+{
+  frage: "Welche Reptilienart ist auf Gewässer und Feuchtgebiete angewiesen?",
+  antworten: [
+    " Die Sandviper",
+    " Die Ringelnatter",
+    " Die Zaun- und Smaragdeidechse"
+  ],
+  korrekt: 1,
+  kategorie: "Natur-, Tier- und Umweltschutz"
+},
+{
+  frage: "Welche der aufgeführten Maßnahmen ist als naturfeindlich anzusehen?",
+  antworten: [
+    " Erstbepflanzung eines Gewässers mit Unterwasser- und Schwimmblattpflanzen",
+    " Bau von Fischaufstiegen an Wehren",
+    " Überbesatz mit Fischen"
+  ],
+  korrekt: 2,
+  kategorie: "Natur-, Tier- und Umweltschutz"
+},
+{
+  frage: "Wie kann ein sinnvoller Beitrag zur Hebung des Krötenbestandes geleistet werden?",
+  antworten: [
+    " Durch starken Fischbesatz in Laichgewässern",
+    " Durch Schutz der für die Krötenvermehrung geeigneten Laichgewässer",
+    " Durch Importieren von Kröten aus außereuropäischen Ländern"
+  ],
+  korrekt: 1,
+  kategorie: "Natur-, Tier- und Umweltschutz"
+},
+{
+  frage: "Warum sollte sich der Angler in Uferbereichen mit Schilf und Röhricht besonders umsichtig verhalten?",
+  antworten: [
+    " Weil dort Wasservögel nisten oder nach Nahrung suchen und die Anwesenheit eines Anglers die Tiere beunruhigen könnte",
+    " Weil die Angelschnur in den Pflanzen hängen bleiben kann",
+    " Weil der Drill und die Landung des gehakten Fisches schwierig werden könnten"
+  ],
+  korrekt: 0,
+  kategorie: "Natur-, Tier- und Umweltschutz"
+},
+{
+  frage: "Wann soll die Tragfähigkeit der Angelschnur durch eine Knotenprobe geprüft werden?",
+  antworten: [
+    " Vor jedem Angeln",
+    " Niemals",
+    " Nach einem Jahr"
+  ],
+  korrekt: 0,
+  kategorie: "Gerätekunde"
+},
+{
+  frage: "Angelschnur welcher Tragkraft sollte in der Regel beim Fang von Rotaugen, Rotfedern und Brassen verwendet werden?",
+  antworten: [
+    " 9 bis 17 kg",
+    " 6 bis 9 kg",
+    " 2 bis 6 kg"
+  ],
+  korrekt: 2,
+  kategorie: "Gerätekunde"
+},
+{
+  frage: "Angelschnur welcher Tragkraft sollte in der Regel beim Fang von Karpfen, Hecht und Aal verwendet werden?",
+  antworten: [
+    " 9 bis 17 kg",
+    " 6 bis 9 kg",
+    " 2 bis 6 kg"
+  ],
+  korrekt: 0,
+  kategorie: "Gerätekunde"
+},
+{
+  frage: "Angelschnur welcher Tragkraft sollte in der Regel beim Fang von Flussbarschen verwendet werden?",
+  antworten: [
+    " 9 bis 17 kg",
+    " 6 bis 9 kg",
+    " 5 bis 6 kg"
+  ],
+  korrekt: 2,
+  kategorie: "Gerätekunde"
+},
+{
+  frage: "Wonach hat sich die Bremseinstellung an der Rolle zu richten?",
+  antworten: [
+    " Nach der Tragfähigkeit der Schnur",
+    " Nach der Schwere des zu erwartenden Fisches",
+    " Nach der Größe der Rollenspule"
+  ],
+  korrekt: 0,
+  kategorie: "Gerätekunde"
+},
+{
+  frage: "Wie lang soll das Stahlvorfach (cm) bei der Hechtfischerei mit totem Köderfisch sein?",
+  antworten: [
+    " Mindestens 40",
+    " Mindestens 10",
+    " Mindestens 25"
+  ],
+  korrekt: 0,
+  kategorie: "Gerätekunde"
+},
+{
+  frage: "Was ist ein Drilling?",
+  antworten: [
+    " Der Fang von drei Fischen zur gleichen Zeit",
+    " Drei hintereinander an einer Schnur befestigte Haken",
+    " Ein Haken mit drei Spitzen"
+  ],
+  korrekt: 2,
+  kategorie: "Gerätekunde"
+},
+{
+  frage: "Welche verschiedenen Hakenformen gibt es zum Anbinden beim Einzelhaken?",
+  antworten: [
+    " Flach- und Rundstahlhaken",
+    " Dick- oder dünnschenklige Haken",
+    " Plättchen- und Öhrhaken"
+  ],
+  korrekt: 2,
+  kategorie: "Gerätekunde"
+},
+{
+  frage: "Auf welche Hakenform werden Fliegen gebunden?",
+  antworten: [
+    " Auf Spezialhaken mit eingebundenem Vorfach",
+    " Auf Plättchenhaken",
+    " Auf Öhrhaken"
+  ],
+  korrekt: 2,
+  kategorie: "Gerätekunde"
+},
+{
+  frage: "Was bedeutet die Hakenskala von 1 bis 18?",
+  antworten: [
+    " Von 1 bis 9 ist das Hakenöhr nach oben, von 10 bis 18 nach unten gebogen",
+    " 1 ist der größte Haken",
+    " 18 ist der größte Haken"
+  ],
+  korrekt: 1,
+  kategorie: "Gerätekunde"
+},
+{
+  frage: "Was ist beim Ablassen eines Gewässers nach dem Landesfischereigesetz zu beachten?",
+  antworten: [
+    " Das Ablassen muss durch die Fischereigenossenschaft vorher genehmigt werden",
+    " Der zum Ablassen Berechtigte muss das Ablassen dem Fischereiberechtigten in der Regel eine Woche vorher schriftlich anzeigen",
+    " Der zum Ablassen Berechtigte ist verpflichtet, die Fische zu bergen"
+  ],
+  korrekt: 1,
+  kategorie: "Gesetzeskunde"
+},
+{
+  frage: "Wer wählt den Vorstand der Fischereigenossenschaft?",
+  antworten: [
+    " Die Fischereivereine",
+    " Die zur Genossenschaft gehörenden Fischereiberechtigten",
+    " Der Oberkreisdirektor"
+  ],
+  korrekt: 1,
+  kategorie: "Gesetzeskunde"
+},
+{
+  frage: "Kann einer Person vor Vollendung des 10. Lebensjahres der Jugendfischereischein ausgestellt werden?",
+  antworten: [
+    " Ja, ohne Einschränkung",
+    " Nein",
+    " Ja, wenn diese einem Fischereiverein angehört"
+  ],
+  korrekt: 1,
+  kategorie: "Gesetzeskunde"
+},
+{
+  frage: "Für welche Grundstücke gilt das Uferbetretungsrecht des Fischereiausübungsberechtigten nicht?",
+  antworten: [
+    " Für Campingplätze",
+    " Für eingezäunte Koppeln und Viehweiden",
+    " Für Gebäude und zum unmittelbaren Haus-, Wohn- und Hofbereich gehörende Grundstücksteile"
+  ],
+  korrekt: 2,
+  kategorie: "Gesetzeskunde"
+},
+{
+  frage: "Was versteht man unter “Hegepflicht”?",
+  antworten: [
+    " Das Ruhenlassen der Fischerei, damit sich die Fische stark vermehren können",
+    " Die Pflicht, einen den Gewässerverhältnissen entsprechenden Fischbestand zu hegen und zu erhalten",
+    " Das Verscheuchen fischfressender Vögel"
+  ],
+  korrekt: 1,
+  kategorie: "Gesetzeskunde"
+},
+{
+  frage: "Welche Voraussetzung muss grundsätzlich erfüllt sein, um einen Fischereischein erwerben zu können?",
+  antworten: [
+    " Das Bestehen der Fischerprüfung",
+    " Ein gültiger Pachtvertrag",
+    " Die Mitgliedschaft in einem Fischereiverein"
+  ],
+  korrekt: 0,
+  kategorie: "Gesetzeskunde"
+},
+{
+  frage: "In welchen Fällen wird zur Ausübung der Fischerei ein Fischereierlaubnisschein erforderlich?",
+  antworten: [
+    " Wenn der Ausübende nicht selbst Fischereiberechtigter oder Fischereipächter ist",
+    " Wenn während der Schonzeit gefischt werden soll",
+    " Wenn der Ausübende keine Fischerprüfung abgelegt hat"
+  ],
+  korrekt: 0,
+  kategorie: "Gesetzeskunde"
+},
+{
+  frage: "Was sind verbotene Fangmittel?",
+  antworten: [
+    " Aalreusen, Handangeln, Grundbleiangeln mit Seitenarmen",
+    " Künstliches Licht, explodierende, betäubende und giftige Stoffe",
+    " Spinnangeln und Aalkörbe"
+  ],
+  korrekt: 1,
+  kategorie: "Gesetzeskunde"
+},
+{
+  frage: "Was gilt nicht als eingefriedetes Grundstück?",
+  antworten: [
+    " Ein Grundstück, dessen Zaun leicht überklettert werden kann",
+    " Ein Grundstück, dessen Betreten durch Schilder untersagt ist",
+    " Eingezäunte Viehweiden"
+  ],
+  korrekt: 2,
+  kategorie: "Gesetzeskunde"
+},
+{
+  frage: "Warum werden Schonzeiten festgelegt?",
+  antworten: [
+    " Um ein ungestörtes Ablaichen der Fische zu ermöglichen",
+    " Damit die Fische schwerer werden",
+    " Damit die Fische in Ruhe fressen können"
+  ],
+  korrekt: 0,
+  kategorie: "Gesetzeskunde"
+},
+{
+  frage: "Wo sitzt das Herz der Fische?",
+  antworten: [
+    " In der Kehlgegend",
+    " In der Mitte zwischen Kopf und After",
+    " Zwischen Rückenflosse und Bauchflosse"
+  ],
+  korrekt: 0,
+  kategorie: "Allgemeine Fischkunde"
+},
+{
+  frage: "Welche Bedeutung hat der Dottersack für die geschlüpfte Fischlarve?",
+  antworten: [
+    " Er verhindert, dass sie von der Strömung fortgeschwemmt wird",
+    " Er dient zu ihrer Ernährung",
+    " Er hat keine Bedeutung"
+  ],
+  korrekt: 1,
+  kategorie: "Allgemeine Fischkunde"
+},
+{
+  frage: "Hören Fische Töne?",
+  antworten: [
+    " Nein",
+    " Ja",
+    " Nur im flachen Wasser"
+  ],
+  korrekt: 1,
+  kategorie: "Allgemeine Fischkunde"
+},
+{
+  frage: "Bei welchen Altersstadien unserer Fische ist die prozentuale Gewichtszunahme am größten?",
+  antworten: [
+    " Fische wachsen in allen Altersstadien gleichmäßig",
+    " Bei sehr alten Fischen",
+    " Bei den Jungfischen"
+  ],
+  korrekt: 2,
+  kategorie: "Allgemeine Fischkunde"
+},
+{
+  frage: "Warum werden Fische als wechselwarme Tiere bezeichnet?",
+  antworten: [
+    " Weil ihre Körpertemperatur in den verschiedenen Altersstufen wechselt",
+    " Weil sich ihre Körpertemperatur der jeweiligen Wassertemperatur angleicht",
+    " Weil sie ihre Körpertemperatur unabhängig von der Wassertemperatur wechseln können"
+  ],
+  korrekt: 1,
+  kategorie: "Allgemeine Fischkunde"
+},
+{
+  frage: "Ist bei Fischen die Entwicklung der Eier temperaturabhängig?",
+  antworten: [
+    " Ja",
+    " Nur beim Karpfen",
+    " Nein"
+  ],
+  korrekt: 0,
+  kategorie: "Allgemeine Fischkunde"
+},
+{
+  frage: "Welche der genannten Fische laichen im Winter?",
+  antworten: [
+    " Die Rotaugen (Plötzen)",
+    " Die Karpfen",
+    " Die Forellen"
+  ],
+  korrekt: 2,
+  kategorie: "Allgemeine Fischkunde"
+},
+{
+  frage: "Was bedeutet es, wenn die Fische mit dem Maul über die Wasseroberfläche drängen?",
+  antworten: [
+    " Das Wasser ist zu kalt",
+    " Es besteht Nahrungsmangel",
+    " Es besteht Sauerstoffmangel"
+  ],
+  korrekt: 2,
+  kategorie: "Allgemeine Fischkunde"
+},
+{
+  frage: "Welcher Verdacht besteht, wenn sich in der Leibeshöhle des Karpfens eine starke Flüssigkeitsansammlung befindet?",
+  antworten: [
+    " Es besteht kein Krankheitsverdacht",
+    " Der Fisch ist an Bauchwassersucht erkrankt",
+    " Der Fisch leidet an einer Nierenerkrankung"
+  ],
+  korrekt: 1,
+  kategorie: "Allgemeine Fischkunde"
+},
+{
+  frage: "Wozu gehört die Karpfenlaus?",
+  antworten: [
+    " Zu den Insekten",
+    " Zu den Krebsen",
+    " Zu den Spinnen"
+  ],
+  korrekt: 1,
+  kategorie: "Allgemeine Fischkunde"
+},
+{
+  frage: "Wohin legt der Karpfen seine Eier ab?",
+  antworten: [
+    " An Pflanzen",
+    " Bei kiesigem Boden in Laichgruben",
+    " In Nester aus Pflanzenteilen"
+  ],
+  korrekt: 0,
+  kategorie: "Spezielle Fischkunde"
+},
+{
+  frage: "Welcher Fisch betreibt eine besonders intensive Brutpflege?",
+  antworten: [
+    " Der Aland",
+    " Der Stichling",
+    " Die Elritze"
+  ],
+  korrekt: 1,
+  kategorie: "Spezielle Fischkunde"
+},
+{
+  frage: "Welche Fische gehören zu den Schmerlenartigen?",
+  antworten: [
+    " Die Barbe und die Mühlkoppe",
+    " Der Gründling und die Elritze",
+    " Der Schlammpeitzger und der Steinbeißer"
+  ],
+  korrekt: 2,
+  kategorie: "Spezielle Fischkunde"
+},
+{
+  frage: "Wohin legen die Bitterlinge ihre Eier?",
+  antworten: [
+    " Sie legen die Eier in ein Nest aus Wasserpflanzen",
+    " Sie legen keine Eier, weil sie lebendgebärend sind",
+    " Sie legen die Eier in Großmuscheln ab"
+  ],
+  korrekt: 2,
+  kategorie: "Spezielle Fischkunde"
+},
+{
+  frage: "Zu welcher Verwandtschaft gehört die Quappe (Rutte)?",
+  antworten: [
+    " Zu den Welsartigen",
+    " Zu den Dorschartigen",
+    " Zu den Schmerlen"
+  ],
+  korrekt: 1,
+  kategorie: "Spezielle Fischkunde"
+},
+{
+  frage: "Welches Merkmal ist typisch für barschartige Fische?",
+  antworten: [
+    " Die Bauchflossen sind kehlständig und mit vier starken Dornen versehen",
+    " Die zweite Rückenflosse hat kräftige Stachelstrahlen",
+    " Die erste Rückenflosse hat kräftige Stachelstrahlen"
+  ],
+  korrekt: 2,
+  kategorie: "Spezielle Fischkunde"
+},
+{
+  frage: "Wie ist die Schwimmblase der Barsche gebaut?",
+  antworten: [
+    " Sie ist einkammerig mit Luftgang",
+    " Sie ist zweikammerig mit Luftgang",
+    " Sie ist einkammerig ohne Luftgang"
+  ],
+  korrekt: 2,
+  kategorie: "Spezielle Fischkunde"
+},
+{
+  frage: "Wie legt der Flussbarsch seine Eier ab?",
+  antworten: [
+    " Er legt die Eier in langen Bändern ab",
+    " Er klebt die Eier einzeln an Pflanzen",
+    " Er legt die Eier in flachen Gruben ab"
+  ],
+  korrekt: 0,
+  kategorie: "Spezielle Fischkunde"
+},
+{
+  frage: "Wann laicht der Zander?",
+  antworten: [
+    " Von Januar bis März",
+    " Von Mai bis Juni",
+    " Von Oktober bis Dezember"
+  ],
+  korrekt: 1,
+  kategorie: "Spezielle Fischkunde"
+},
+{
+  frage: "Wieviel Eier hat die Bachforelle pro kg Körpergewicht?",
+  antworten: [
+    " 20.000 bis 50.000 Stück",
+    " 1.500 bis 2.500 Stück",
+    " 100.000 bis 300.000 Stück"
+  ],
+  korrekt: 1,
+  kategorie: "Spezielle Fischkunde"
+},
+{
+  frage: "Durch welche Witterungsverhältnisse wird Fischsterben infolge Sauerstoffmangels in stark verkrauteten Teichen begünstigt?",
+  antworten: [
+    " Durch plötzliches Aufklaren in Vollmondnächten",
+    " Durch windstille, warme Nächte",
+    " Durch starke Regen- und Schneefälle"
+  ],
+  korrekt: 1,
+  kategorie: "Gewässerkunde"
+},
+{
+  frage: "Bis zu welcher Tiefe in Seen können grüne Pflanzen dauernd leben?",
+  antworten: [
+    " Der Pflanzenwuchs ist unabhängig von der Tiefe",
+    " Soweit genügend Licht eindringt",
+    " Soweit der Wasserdruck nicht zu stark ist"
+  ],
+  korrekt: 1,
+  kategorie: "Gewässerkunde"
+},
+{
+  frage: "In welcher Reihenfolge wachsen Pflanzen vom Ufer aus gesehen?",
+  antworten: [
+    " Laichkräuter – unterseeische Wiesen – Röhricht – Schwimmblattpflanzen",
+    " Röhricht – Schwimmblattpflanzen – Laichkräuter – unterseeische Wiesen",
+    " Schwimmblattpflanzen – Laichkräuter – Röhricht – unterseeische Wiesen"
+  ],
+  korrekt: 1,
+  kategorie: "Gewässerkunde"
+},
+{
+  frage: "Was ist ein eutrophes Gewässer?",
+  antworten: [
+    " Es ist ein saures Gewässer",
+    " Es ist reich an Nährstoffen",
+    " Es ist arm an Nährstoffen"
+  ],
+  korrekt: 1,
+  kategorie: "Gewässerkunde"
+},
+{
+  frage: "Was ist mit dem Begriff “Wasserblüte” gemeint?",
+  antworten: [
+    " Eine Verfärbung des Wassers durch Abwässer",
+    " Eine Verfärbung des Wassers durch chemische Einflüsse",
+    " Eine Verfärbung des Wassers durch übermäßige Algenentwicklung"
+  ],
+  korrekt: 2,
+  kategorie: "Gewässerkunde"
+},
+{
+  frage: "Beeinflusst die Wassertemperatur die Löslichkeit für Sauerstoff?",
+  antworten: [
+    " Ja, kaltes Wasser nimmt mehr Sauerstoff auf als warmes",
+    " Nein",
+    " Ja, warmes Wasser enthält mehr Sauerstoff"
+  ],
+  korrekt: 0,
+  kategorie: "Gewässerkunde"
+},
+{
+  frage: "Was wirkt sich negativ auf die normale Tier- und Pflanzenwelt in Talsperrengewässern aus?",
+  antworten: [
+    " Die starke Abkühlung im Winter",
+    " Die häufige Änderung des Wasserstandes",
+    " Die intensive Sonneneinstrahlung"
+  ],
+  korrekt: 1,
+  kategorie: "Gewässerkunde"
+},
+{
+  frage: "Was sind die fischereilichen Besonderheiten junger Baggergewässer?",
+  antworten: [
+    " Geringer Sauerstoffgehalt in der Oberflächenzone",
+    " Hohe Wassertemperaturen im Sommer",
+    " Geringer Nährstoffgehalt"
+  ],
+  korrekt: 2,
+  kategorie: "Gewässerkunde"
+},
+{
+  frage: "Wonach sollten sich Besatzmaßnahmen richten?",
+  antworten: [
+    " Nach den Wünschen der Mehrheit der Vereinsmitglieder",
+    " Nach den finanziellen Möglichkeiten",
+    " Nach ökologischen und fischereibiologischen Faktoren"
+  ],
+  korrekt: 2,
+  kategorie: "Gewässerkunde"
+},
+{
+  frage: "Durch welche Abwässer kann im Gewässer Sauerstoffmangel entstehen?",
+  antworten: [
+    " Durch organische, fäulnisfähige Abwässer",
+    " Durch Betonschwemmwässer",
+    " Durch saure Abwässer"
+  ],
+  korrekt: 0,
+  kategorie: "Gewässerkunde"
+},
+{
+  frage: "Sollten Baggerseen Flachwasserzonen mit Unterwasserpflanzen, Schwimmblattpflanzen und Schilfgürteln aufweisen?",
+  antworten: [
+    " Nein, denn in solchen Zonen vermehren sich vorwiegend Raubfische",
+    " Nein, denn sie verkleinern die befischbare Wasserfläche, fördern die Bildung von Faulschlamm und beschatten das Gewässer",
+    "Ja, sie fördern das Aufkommen von Fischnährtieren und Fischbrut, dienen als Laichplatz für Fische und Amphibien sowie für andere Wassertiere und bieten der Vogelwelt Nistplätze, Schutz und Nahrung"
+  ],
+  korrekt: 2,
+  kategorie: "Natur-, Tier- und Umweltschutz"
+},
+{
+  frage: "In welcher Reihenfolge muss nach dem Landen des Fisches vorgegangen werden?",
+  antworten: [
+    " Messen, betäuben, töten, Haken entfernen",
+    " Betäuben, töten, Haken entfernen, messen",
+    " Betäuben, messen, töten, Haken entfernen"
+  ],
+  korrekt: 0,
+  kategorie: "Natur-, Tier- und Umweltschutz"
+},
+{
+  frage: "Wie lange soll ein gehakter Fisch gedrillt werden?",
+  antworten: [
+    " Bis der Angler ermüdet",
+    " Solange wie nötig, um ihn schonend zu landen",
+    " Mindestens 10 Minuten"
+  ],
+  korrekt: 1,
+  kategorie: "Natur-, Tier- und Umweltschutz"
+},
+{
+  frage: "In welcher Zeit ist an den Gewässern besondere Rücksicht auf Wasservögel zu nehmen?",
+  antworten: [
+    " An trüben Tagen wegen der geringen Sichtweite der Vögel",
+    " Während der Morgen- und Abenddämmerung",
+    " Während der Brut und Aufzucht der Jungvögel im Frühjahr und Frühsommer"
+  ],
+  korrekt: 2,
+  kategorie: "Natur-, Tier- und Umweltschutz"
+},
+{
+  frage: "Wann sind einige Wasservögel infolge der Mauser flugunfähig?",
+  antworten: [
+    " Meistens im Juli bis September",
+    " Während der Brut",
+    " Wenn die Gewässer zugefroren sind"
+  ],
+  korrekt: 0,
+  kategorie: "Natur-, Tier- und Umweltschutz"
+},
+{
+  frage: "Warum muss bei der Hechtangelei ein Stahlvorfach eingesetzt werden?",
+  antworten: [
+    " Es muss kein Stahlvorfach eingesetzt werden",
+    " Damit der Köder besser geführt werden kann",
+    " Damit der gehakte Hecht die Schnur nicht durchbeißen kann"
+  ],
+  korrekt: 2,
+  kategorie: "Natur-, Tier- und Umweltschutz"
+},
+{
+  frage: "Warum ist ein maßiger und verwertbarer Fisch nach dem Fang sofort zu töten?",
+  antworten: [
+    " Damit der Fisch nicht an Gewicht verliert",
+    " Damit der Fisch ordentlich gemessen werden kann",
+    " Damit dem Fisch unnötiges Leiden erspart bleibt"
+  ],
+  korrekt: 2,
+  kategorie: "Natur-, Tier- und Umweltschutz"
+},
+{
+  frage: "Was bedeutet waidgerechtes Angeln?",
+  antworten: [
+    " Das Fangen, Töten, Versorgen und Verwerten der Fische im Sinne des Tierschutzgesetzes",
+    " Eine spezielle Methode, unter Weiden zu angeln",
+    " Waidgerechtigkeit ist ein Begriff aus der Jägersprache und hat mit dem Angeln nichts zu tun"
+  ],
+  korrekt: 0,
+  kategorie: "Natur-, Tier- und Umweltschutz"
+},
+{
+  frage: "Ist es richtig, sich seinen Angelplatz in der Nähe einer Eisvogelniströhre zu wählen?",
+  antworten: [
+    " Ja, wo Eisvögel nisten, gibt es auch viele Fische",
+    " Nein, das Angeln an Steilwänden ist gefährlich und daher generell untersagt",
+    " Nein, Niströhren von Eisvögeln sind weiträumig zu umgehen, um das Brutgeschäft nicht zu stören"
+  ],
+  korrekt: 2,
+  kategorie: "Natur-, Tier- und Umweltschutz"
+},
+{
+  frage: "Warum sollte die Angelschnur immer frei von schadhaften Stellen sein?",
+  antworten: [
+    " Damit die Rolle nicht beschädigt wird",
+    "Damit die Hersteller und Händler gute Geschäfte machen",
+    " Damit die Fische schnell und sicher gelandet werden können"
+  ],
+  korrekt: 2,
+  kategorie: "Natur-, Tier- und Umweltschutz"
+},
+{
+  frage: "Welche wesentliche Aufgabe hat bei der Spinnfischerei ein vorgeschalteter Wirbel?",
+  antworten: [
+    " Er verhindert ein Verdrallen der Schnur",
+    " Er erhöht den Anreiz zum Anbiss für den Raubfisch",
+    " Er hat das Wasser mit Sauerstoff anzureichern"
+  ],
+  korrekt: 0,
+  kategorie: "Gerätekunde"
+},
+{
+  frage: "Was ist ein Laufblei?",
+  antworten: [
+    " Ein Lochblei",
+    " Ein Lotblei",
+    " Ein Vorlaufblei vor einem künstlichen Köder"
+  ],
+  korrekt: 0,
+  kategorie: "Gerätekunde"
+},
+{
+  frage: "Was ist eine Rachensperre?",
+  antworten: [
+    " Spezialblinker für große Zander",
+    " Ein Hilfsgerät bei der Fischerei auf Hecht und Zander",
+    " Eine Fischkrankheit"
+  ],
+  korrekt: 1,
+  kategorie: "Gerätekunde"
+},
+{
+  frage: "Was ist eine Senke?",
+  antworten: [
+    " Ein Netz zum Köderfischfang",
+    " Ein Netz zur Aufbewahrung von Köderfischen",
+    " Ein Gerät zur Tiefenmessung"
+  ],
+  korrekt: 0,
+  kategorie: "Gerätekunde"
+},
+{
+  frage: "Wodurch unterscheidet sich ein Spinner von einem Blinker?",
+  antworten: [
+    " Der Spinner ist leichter als ein Blinker",
+    " Das Blatt des Spinners dreht sich um eine Achse",
+    " Der Spinner ist farbiger als ein Blinker"
+  ],
+  korrekt: 1,
+  kategorie: "Gerätekunde"
+},
+{
+  frage: "Was ist ein Wobbler?",
+  antworten: [
+    " Ein halbautomatisches Anfütterungsgerät für Weißfische",
+    " Ein künstlicher Köder für den Fang von Raubfischen",
+    " Ein Gerät zum waidgerechten Töten gefangener Fische"
+  ],
+  korrekt: 1,
+  kategorie: "Gerätekunde"
+},
+{
+  frage: "Was ist ein typisches Merkmal eines Spinners?",
+  antworten: [
+    " Er ist farbiger als ein Blinker",
+    " Er taumelt",
+    " Er dreht sich um eine Achse"
+  ],
+  korrekt: 2,
+  kategorie: "Gerätekunde"
+},
+{
+  frage: "Was ist ein Pilker?",
+  antworten: [
+    " Ein schwerer Metallköder",
+    " Eine seltene Wurmart",
+    " Ein Landegerät"
+  ],
+  korrekt: 0,
+  kategorie: "Gerätekunde"
+},
+{
+  frage: "Was bedeutet der Begriff “Nassfischen” bei der Flugangelei?",
+  antworten: [
+    " Watfischen",
+    " Fischen im Regen",
+    " Fischen mit künstlicher Fliege unter Wasser"
+  ],
+  korrekt: 2,
+  kategorie: "Gerätekunde"
+},
+{
+  frage: "Wie lang ist eine Spinnrute zum Fang von Flussbarschen?",
+  antworten: [
+    " 1,8 bis 2,7 m",
+    " 2,7 bis 3,5 m",
+    " 3,5 bis 5,0 m"
+  ],
+  korrekt: 0,
+  kategorie: "Gerätekunde"
+},
+{
+  frage: "Welche Ausweise sind zur Ausübung des Fischfanges in Binnengewässern gesetzlich vorgeschrieben?",
+  antworten: [
+    " Die Vereinssatzung und der Mitgliedsausweis",
+    " Der Fischereischein und der Fischereierlaubnisschein",
+    " Die Vereinsgewässerordnung und der Fischerpass"
+  ],
+  korrekt: 1,
+  kategorie: "Gesetzeskunde"
+},
+{
+  frage: "Wonach muss sich der Fischereiausübungsberechtigte unbedingt erkundigen, nachdem er die Erlaubnis, fremdes Gewässer zu beangeln, erhalten hat?",
+  antworten: [
+    " Nach den Fischereikontrollen und den Strafen für Übertretungen",
+    " Nach besonderen Auflagen, die Schonzeiten und die Mindestmaße betreffend, und nach den Gesetzen, innerhalb derer er die Fischerei ausüben darf",
+    " Nach guten Angelstellen, besten Fangzeiten und bewährten Ködern"
+  ],
+  korrekt: 1,
+  kategorie: "Gesetzeskunde"
+},
+{
+  frage: "Was versteht man unter Zugang zu Gewässern?",
+  antworten: [
+    " Das Betreten eingefriedeter Grundstücke zum Zwecke des Angelns",
+    " Das Betreten von Fabrikgrundstücken mit dem Ziel, an das Gewässer zu gelangen",
+    " Das Betreten von Ufern und Grundstücken in dem für die Fischerei notwendigen Umfang"
+  ],
+  korrekt: 2,
+  kategorie: "Gesetzeskunde"
+},
+{
+  frage: "Wem steht ein Uferbetretungsrecht zu?",
+  antworten: [
+    " Dem Fischereiausübungsberechtigten",
+    " Jedem Inhaber eines Fischereischeins",
+    " Dem Fischereiausübungsberechtigten und seinen Angehörigen"
+  ],
+  korrekt: 0,
+  kategorie: "Gesetzeskunde"
+},
+{
+  frage: "Müssen einem amtlich verpflichteten Fischereiaufseher die Fischereipapiere ausgehändigt werden?",
+  antworten: [
+    " Nein",
+    " Nur, wenn er sich in Begleitung des Fischereiberechtigten befindet",
+    " Ja"
+  ],
+  korrekt: 2,
+  kategorie: "Gesetzeskunde"
+},
+{
+  frage: "Für welche Maßnahmen im Rahmen der Hege und Pflege des Fischbestands ist eine behördliche Genehmigung erforderlich?",
+  antworten: [
+    " Für die Stellnetzfischerei",
+    " Für die Reusenfischerei",
+    " Für die Ausübung der Elektrofischerei"
+  ],
+  korrekt: 2,
+  kategorie: "Gesetzeskunde"
+},
+{
+  frage: "Darf die Elektrofischerei von jedermann ausgeübt werden?",
+  antworten: [
+    " Ja, wenn ein Fischereierlaubnisschein für das zu befischende Gewässer vorliegt",
+    " Nein, ausschließlich von Personen, die den Bedienungsschein besitzen",
+    " Nein, nur vom Fischereiberechtigten im eigenen Gewässer"
+  ],
+  korrekt: 1,
+  kategorie: "Gesetzeskunde"
+},
+{
+  frage: "Wer ist die obere Fischereibehörde?",
+  antworten: [
+    " Die Bezirksregierung",
+    " Das Umweltministerium",
+    " Der Oberkreisdirektor"
+  ],
+  korrekt: 0,
+  kategorie: "Gesetzeskunde"
+},
+{
+  frage: "Kann ein Fischereiverein Mitglied der Fischereigenossenschaft sein?",
+  antworten: [
+    " Ja, sofern er eine Fischereipacht im Gebiet der Genossenschaft hat",
+    " Ja, wenn er im Gebiet der Genossenschaft ein eigenes Fischereirecht besitzt",
+    " Nein"
+  ],
+  korrekt: 1,
+  kategorie: "Gesetzeskunde"
+},
+{
+  frage: "Wo gilt das am 1. Januar 1973 in Kraft getretene Landesfischereigesetz?",
+  antworten: [
+    " In den ehemals preußischen Landesteilen",
+    " Im Land Nordrhein-Westfalen",
+    " Im Bundesgebiet"
+  ],
+  korrekt: 1,
+  kategorie: "Gesetzeskunde"
+},
+
+
+
+ 
+  ]
+  /* Helpers */
+  function shuffle(arr){ return [...arr].sort(()=>Math.random()-0.5); }
+
+  /* State */
+  let deck = [];
+  let aktuelle = null;
+  let gewaehlt = -1;
+
+  /* Neues Frage-Deck */
+  function neuesDeck(){ deck = shuffle([...Array(fragen.length).keys()]); }
+
+  /* ===== Neue Frage (mit zufälligen Antworten!) ===== */
+  function neueFrage(){
+    if(deck.length === 0) neuesDeck();
+    const idx = deck.pop();
+    const f = fragen[idx];
+
+    // Antworten + Korrekt-Info bündeln
+    let antwortObjekte = f.antworten.map((text, i)=>({
+      text,
+      istKorrekt: i === f.korrekt
+    }));
+
+    // Antworten mischen
+    antwortObjekte = shuffle(antwortObjekte);
+
+    // gemischte Antworten + neuen korrekten Index übernehmen
+    aktuelle = {
+      frage: f.frage,
+      antworten: antwortObjekte.map(a => a.text),
+      korrekt: antwortObjekte.findIndex(a => a.istKorrekt)
+    };
+
+    gewaehlt = -1;
+    renderFrage();
+  }
+
+  /* Render Frage */
+  function renderFrage(){
+    const frageEl = document.getElementById("frageText");
+    const btns = [...document.querySelectorAll("#answers .choice")];
+    const result = document.getElementById("result");
+
+    frageEl.textContent = aktuelle.frage;
+    result.textContent = "";
+
+    aktuelle.antworten.forEach((txt,i)=>{
+      const b = btns[i];
+      b.textContent = txt;
+      b.className = "choice";
+      b.disabled = false;
+
+      b.onclick = ()=>{
+        gewaehlt = i;
+        btns.forEach(x=>x.classList.remove("selected"));
+        b.classList.add("selected");
+      };
+    });
+
+    document.getElementById("btnPruefen").disabled = false;
+    document.getElementById("btnWeiter").disabled = true;
+  }
+
+  /* Prüfen */
+  function pruefen(){
+    if(gewaehlt === -1){
+      const r = document.getElementById("result");
+      r.textContent = "Bitte erst eine Antwort auswählen.";
+      r.style.color = "gold";
+      return;
+    }
+
+    const btns = [...document.querySelectorAll("#answers .choice")];
+    const r = document.getElementById("result");
+
+    btns.forEach(b=>b.disabled = true);
+
+    btns[aktuelle.korrekt].classList.add("correct");
+
+    if(gewaehlt !== aktuelle.korrekt){
+      btns[gewaehlt].classList.add("wrong");
+      r.textContent = "Falsch! Richtig ist: " + aktuelle.antworten[aktuelle.korrekt];
+      r.style.color = "salmon";
+    } else {
+      r.textContent = "Richtig!";
+      r.style.color = "lightgreen";
+    }
+
+    document.getElementById("btnPruefen").disabled = true;
+    document.getElementById("btnWeiter").disabled = false;
+  }
+
+  document.getElementById("btnPruefen").onclick = pruefen;
+  document.getElementById("btnWeiter").onclick  = neueFrage;
+
+  neuesDeck();
+  neueFrage();
+  </script>
+
+  </body>
+  </html>

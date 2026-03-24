@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Angler App – Start</title>
+
+  <style>
+    :root{
+      --bg:#262626; --text:#fff; --card:#333; --muted:#d9d9d9;
+      --accent:#4c8bf5; --shadow:rgba(0,0,0,.55); --icon:#fff;
+    }
+    html.light{
+      --bg:#e8edf1; --text:#1a1a1a; --card:#fff; --muted:#555;
+      --accent:#2256c6; --shadow:rgba(0,0,0,.15); --icon:#000;
+    }
+
+    body{
+      margin:0; background:var(--bg); color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      transition:background .25s,color .25s;
+    }
+
+    header{
+      position:sticky; 
+      top:0; 
+      z-index:10;
+      padding:14px 16px;
+      background:linear-gradient(180deg,rgba(0,0,0,.35),transparent);
+    }
+
+    .bar{
+      max-width:980px; 
+      margin:0 auto; 
+      display:flex; 
+      align-items:center; 
+      justify-content:center;
+      position:relative;
+    }
+
+    /* Menü links */
+    .menu-btn{
+      position:absolute; 
+      left:0; 
+      top:50%; 
+      transform:translateY(-50%);
+      background:transparent; 
+      border:none; 
+      cursor:pointer; 
+      padding:4px;
+    }
+    .menu-btn img{
+      height:34px;
+    }
+
+    /* Logo */
+    .logo{
+      display:flex; 
+      align-items:center; 
+      justify-content:center; 
+    }
+    .logo img{
+      height:58px;
+    }
+
+    /* Theme Toggle rechts */
+    .toggle{
+      position:absolute;
+      right:0;
+      top:50%;
+      transform:translateY(-50%);
+      background:transparent;
+      border:none;
+      cursor:pointer;
+      width:40px;
+      height:40px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:0;
+    }
+    .toggle svg{
+      width:26px;
+      height:26px;
+      display:block;
+    }
+
+    /* Layout */
+    .wrap{
+      max-width:980px; 
+      margin:0 auto; 
+      padding:24px; 
+      text-align:center;
+    }
+
+    .menu-buttons{
+      display:flex; 
+      flex-direction:column;
+      gap:20px; 
+      margin-top:28px; 
+      align-items:center;
+    }
+
+   
+
+/* Buttons */
+.btn-card{
+  width:80%;
+  max-width:420px;
+  background:var(--card);
+  color:var(--text);
+  padding:18px 20px;
+  border-radius:16px;
+  display:grid;                         /* Grid für echte Zentrierung */
+  grid-template-columns:auto 1fr auto;  /* Icon | Text | Platzhalter */
+  align-items:center;
+  column-gap:14px;
+  cursor:pointer;
+  border:2px solid transparent;
+  transition:transform .18s,border-color .18s;
+  box-shadow:0 8px 24px var(--shadow);
+}
+.btn-card:hover{
+  transform:translateY(-3px);
+  border-color:#ffffff33;
+}
+
+/* Einheitliche Icon-Größe NUR über .icon festlegen */
+.btn-card .icon{
+  width:28px;
+  height:28px;
+  display:block;
+}
+
+/* Rechter Platzhalter – exakt gleiche Breite wie .icon */
+.btn-card .spacer{
+  width:28px;
+  height:1px;           /* nur Platzhalter */
+}
+
+/* Titel sauber mittig in der mittleren Spalte */
+.btn-card .btn-title{
+  font-size:20px;
+  font-weight:700;
+  text-align:center;
+}
+
+/* WICHTIG: Diese globale Regel ENTFERNEN, sonst überschreibt sie .icon!
+   .btn-card svg{ width:32px; height:32px; }  <-- bitte löschen
+*/
+
+html.dark .btn-card{ background:#2f2f2f; }
+
+
+    /* DARKMODE FIX */
+    html.dark .btn-card{
+      background:#2f2f2f;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="bar">
+
+      
+
+      <div class="logo">
+        <img src="img/Logo.png" alt="Logo">
+      </div>
+
+      <button class="toggle" id="themeBtn">
+        <span id="themeIcon"></span>
+      </button>
+
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <main class="wrap">
+
+    
+
+<div class="menu-buttons">
+
+  <!-- FISCHKUNDE -->
+  <div class="btn-card" onclick="go('Lernen.html')">
+    
+<svg class="icon" viewBox="0 0 24 24" fill="none"
+     stroke="var(--text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  
+  <!-- Körper -->
+  <path d="M3 12c3-4 7-6 11-6c3 0 5 2 7 4c-2 2-4 4-7 4c-4 0-8-2-11-6z"/>
+  
+  <!-- Schwanzflosse (echte Flossenform) -->
+  <path d="M21 10c1 0 0 0 0 0c-0 -0 -0 -0 -0 -0c0 0 0 -0 0 -0z"/>
+
+  
+  
+
+</svg>
+
+
+    <div class="btn-title">Lernen</div>
+
+    <span class="spacer" aria-hidden="true"></span>
+  </div>
+
+  <!-- SCHONZEITEN -->
+  <div class="btn-card" onclick="go('schonzeiten.html')">
+    <svg class="icon" viewBox="0 0 24 24" fill="none"
+         stroke="var(--text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+      <line x1="16" y1="2" x2="16" y2="6"></line>
+      <line x1="8"  y1="2" x2="8"  y2="6"></line>
+      <line x1="3"  y1="10" x2="21" y2="10"></line>
+    </svg>
+
+    <div class="btn-title">Schonzeiten &amp; Mindestmaß</div>
+
+    <span class="spacer" aria-hidden="true"></span>
+  </div>
+
+</div>
+
+
+
+  </main>
+
+  <script>
+    /* NAVIGATION */
+    function go(u){ window.location.href = u }
+
+    /* THEME SWITCH */
+    (function(){
+      const saved = localStorage.getItem('theme') || 'dark';
+      document.documentElement.classList.add(saved);
+      setIcon(saved);
+
+      document.getElementById('themeBtn').onclick = ()=>{
+        const now = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+        document.documentElement.classList.remove('dark','light');
+        document.documentElement.classList.add(now);
+        localStorage.setItem('theme', now);
+        setIcon(now);
+      };
+
+      function setIcon(mode){
+        document.getElementById('themeIcon').innerHTML =
+          mode === 'dark'
+            /* Sonne */
+            ? '<svg viewBox="0 0 24 24" fill="none" stroke="var(--icon)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/></svg>'
+            /* Mond */
+            : '<svg viewBox="0 0 24 24" fill="var(--icon)"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+      }
+    })();
+  </script>
+
+</body>
+</html>

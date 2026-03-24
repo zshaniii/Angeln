@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fischkunde – Menü</title>
+
+<style>
+/* ===================== THEME ===================== */
+:root{
+  --bg:#262626; --text:#fff; --card:#333; --muted:#d9d9d9;
+  --accent:#4c8bf5; --shadow:rgba(0,0,0,.55); --icon:#fff;
+}
+html.light{
+  --bg:#e8edf1; --text:#1a1a1a; --card:#fff; --muted:#555;
+  --accent:#2256c6; --shadow:rgba(0,0,0,.15); --icon:#000;
+}
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+  transition:background .25s,color .25s;
+}
+
+/* ===================== HEADER ===================== */
+header{
+  position:sticky;
+  top:0;
+  z-index:50;
+  padding:14px 16px;
+  background:linear-gradient(180deg,rgba(0,0,0,.35),transparent);
+}
+.bar{
+  max-width:980px;
+  margin:0 auto;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+}
+
+.menu-btn{
+  position:absolute;
+  left:0;
+  top:50%;
+  transform:translateY(-50%);
+  background:transparent;
+  border:none;
+  padding:4px;
+  cursor:pointer;
+  color:var(--icon);
+}
+.menu-btn svg{
+  width:34px;
+  height:34px;
+  stroke:currentColor;
+}
+
+.logo{
+  font-size:22px;
+  font-weight:700;
+}
+
+.toggle{
+  position:absolute;
+  right:0;
+  top:50%;
+  transform:translateY(-50%);
+  width:40px;
+  height:40px;
+  background:transparent;
+  border:none;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--icon);
+}
+.toggle svg{ width:26px; height:26px; }
+
+/* ===================== CONTENT ===================== */
+.wrap{
+  max-width:980px;
+  margin:0 auto;
+  padding:24px;
+  text-align:center;
+}
+
+/* ===================== BUTTONS ===================== */
+.menu-buttons{
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+  margin-top:40px;
+  align-items:center;
+}
+
+.btn-card{
+  width:80%;
+  max-width:420px;
+  background:var(--card);
+  padding:18px 20px;
+  border-radius:16px;
+  color:var(--text);
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  align-items:center;
+  gap:12px;
+  cursor:pointer;
+  border:2px solid transparent;
+  box-shadow:0 8px 24px var(--shadow);
+  transition:.2s;
+}
+.btn-card:hover{
+  transform:translateY(-3px);
+  border-color:#ffffff33;
+}
+
+.icon{
+  width:28px;
+  height:28px;
+}
+.spacer{ width:28px; }
+
+.btn-title{
+  font-size:20px;
+  font-weight:700;
+}
+
+/* ===================== SLIDE-IN MENU ===================== */
+.overlay{
+  position:fixed;
+  inset:0;
+  opacity:0;
+  pointer-events:none;
+  background:rgba(0,0,0,.55);
+  transition:.25s;
+  z-index:900;
+}
+.overlay.open{
+  opacity:1;
+  pointer-events:auto;
+}
+
+.side-menu{
+  position:fixed;
+  top:0;
+  left:0;
+  height:100vh;
+  width:50vw;
+  max-width:520px;
+  min-width:280px;
+  background:#333;
+  color:#fff;
+  transform:translateX(-100%);
+  transition:.28s ease;
+  z-index:1000;
+  display:flex;
+  flex-direction:column;
+}
+.side-menu.open{ transform:translateX(0); }
+
+.menu-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px 16px;
+  border-bottom:1px solid #444;
+}
+.menu-close{
+  background:transparent;
+  border:1px solid #555;
+  padding:6px 10px;
+  border-radius:8px;
+  cursor:pointer;
+  color:#fff;
+}
+
+.menu-list{
+  list-style:none;
+  margin:0;
+  padding:0;
+}
+
+.menu-item{
+  padding:14px 16px;
+  border-bottom:1px solid #444;
+  cursor:pointer;
+}
+.menu-item:hover{
+  background:#3a3a3a;
+}
+
+/* ===================== DROPDOWN-GRUPPE ===================== */
+.menu-group{
+  padding:14px 16px;
+  border-bottom:1px solid #444;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  cursor:pointer;
+}
+.menu-group:hover{
+  background:#3a3a3a;
+}
+
+.caret{
+  transition:.25s;
+}
+
+.submenu{
+  max-height:0;
+  overflow:hidden;
+  background:#2c2c2c;
+  transition:max-height .28s ease;
+}
+.submenu.open{
+  max-height:300px;
+}
+
+.submenu-item{
+  padding:12px 32px;
+  border-bottom:1px solid #444;
+  cursor:pointer;
+}
+.submenu-item:hover{
+  background:#353535;
+}
+</style>
+</head>
+
+<body>
+
+<!-- ===================== HEADER ===================== -->
+<header>
+  <div class="bar">
+
+    <!-- Menü -->
+    <button class="menu-btn" id="menuButton">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <line x1="3" y1="12" x2="21" y2="12"/>
+        <line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+
+    <!-- Titel -->
+    <div class="logo">Lernen</div>
+
+    <!-- Theme -->
+    <button class="toggle" id="themeBtn">
+      <span id="themeIcon"></span>
+    </button>
+
+  </div>
+</header>
+
+
+<!-- ===================== CONTENT ===================== -->
+<main class="wrap">
+
+  <div class="menu-buttons">
+
+    <!-- FISCHKUNDE -->
+    <div class="btn-card" onclick="go('fischkunde.html')">
+      <svg class="icon" viewBox="0 0 24 24" fill="none"
+           stroke="var(--text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 12c3-4 7-6 11-6c3 0 5 2 7 4c-2 2-4 4-7 4c-4 0-8-2-11-6z"/>
+     
+        <path d="M21 10c1 0 0 0 0 0c-0 -0 -0 -0 -0 -0c0 0 0 -0 0 -0z"/>
+      </svg>
+
+      <div class="btn-title">Fischkunde</div>
+      <span class="spacer"></span>
+    </div>
+
+
+    <!-- PRÜFUNGSFRAGEN -->
+    <div class="btn-card" onclick="go('pruefungsfragen.html')">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" 
+           stroke="var(--text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <path d="M12 17h.01"></path>
+        <path d="M12 13a3 3 0 1 0-3-3"></path>
+      </svg>
+
+      <div class="btn-title">Prüfungsfragen</div>
+      <span class="spacer"></span>
+    </div>
+
+
+    <!-- RUTENBAU -->
+    <div class="btn-card" onclick="go('rutenbau.html')">
+      
+<svg class="icon" viewBox="0 0 24 24" fill="none"
+     stroke="var(--text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    
+    
+   
+
+<!-- Angelrute (länger nach unten gezogen, trifft exakt auf die Schnur) -->
+<path d="M3 20 L12 9" />
+
+<!-- Schnur -->
+<path d="M12 9 C15 12, 14 17, 12 20" />
+
+<!-- Haken -->
+<path d="M12 20 C12 22, 14 22, 14 20" />
+
+
+</svg>
+
+
+      <div class="btn-title">Rutenbau</div>
+      <span class="spacer"></span>
+    </div>
+
+  </div>
+
+</main>
+
+
+<!-- ===================== SIDEBAR MENU ===================== -->
+<div id="overlay" class="overlay"></div>
+
+<nav id="sideMenu" class="side-menu">
+  <div class="menu-header">
+    <strong>Menü</strong>
+    <button id="menuClose" class="menu-close">✕</button>
+  </div>
+
+  <ul class="menu-list">
+
+    <li class="menu-item" onclick="go('index.html')">🏠 Startseite</li>
+
+    <!-- AUFKLAPPBARES MENU -->
+    <li class="menu-group" id="lernenToggle">
+      <span>📘 Lernen</span>
+      <span class="caret">▶</span>
+    </li>
+
+    <div class="submenu" id="lernenMenu">
+      <div class="submenu-item" onclick="go('fischkunde.html')">Fischkunde</div>
+      <div class="submenu-item" onclick="go('pruefungsfragen.html')">Prüfungsfragen</div>
+      <div class="submenu-item" onclick="go('rutenbau.html')">Rutenbau</div>
+    </div>
+
+    <li class="menu-item" onclick="go('schonzeiten.html')">🗓️ Schonzeiten</li>
+
+  </ul>
+</nav>
+
+<!-- ===================== SCRIPT ===================== -->
+<script>
+function go(u){ window.location.href = u; }
+
+/* Menü */
+const menuBtn = document.getElementById("menuButton");
+const menuClose = document.getElementById("menuClose");
+const sideMenu = document.getElementById("sideMenu");
+const overlay  = document.getElementById("overlay");
+
+menuBtn.onclick = () => { sideMenu.classList.add("open"); overlay.classList.add("open"); };
+menuClose.onclick = () => { sideMenu.classList.remove("open"); overlay.classList.remove("open"); };
+overlay.onclick   = () => { sideMenu.classList.remove("open"); overlay.classList.remove("open"); };
+
+/* Dropdown "Lernen" */
+const lernenToggle = document.getElementById("lernenToggle");
+const lernenMenu = document.getElementById("lernenMenu");
+const caret = lernenToggle.querySelector(".caret");
+
+lernenToggle.onclick = () => {
+  lernenMenu.classList.toggle("open");
+  caret.style.transform = lernenMenu.classList.contains("open")
+    ? "rotate(90deg)"
+    : "rotate(0deg)";
+};
+
+/* Theme */
+(function(){
+  const saved = localStorage.getItem("theme") || "dark";
+  document.documentElement.classList.add(saved);
+  setIcon(saved);
+
+  document.getElementById("themeBtn").onclick = () => {
+    const now = document.documentElement.classList.contains("dark") ? "light" : "dark";
+    document.documentElement.classList.remove("dark","light");
+    document.documentElement.classList.add(now);
+    localStorage.setItem("theme", now);
+    setIcon(now);
+  };
+
+  function setIcon(mode){
+    document.getElementById("themeIcon").innerHTML =
+      mode === "dark"
+      ? `<svg viewBox="0 0 24 24" fill="none" stroke="var(--icon)" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/></svg>`
+      : `<svg viewBox="0 0 24 24" fill="var(--icon)"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>`;
+  }
+})();
+</script>
+
+</body>
+</html>

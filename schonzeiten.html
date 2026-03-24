@@ -1,0 +1,944 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Schonzeiten – Angler App</title>
+  <!-- Optional: <link rel="manifest" href="Manifest.json"> -->
+  <style>
+    /* === DARKMODE Tabellen & Formulare === */
+    html.dark table { background:#2b2b2b; color:#fff; }
+    html.dark th { background:#333 !important; color:#fff; border-bottom:1px solid #444; }
+    html.dark td { background:#2b2b2b; color:#eaeaea; border-bottom:1px solid #3a3a3a; }
+    html.dark .table { border:1px solid #444; }
+    html.dark select, html.dark button, html.dark .secondary {
+      background:#3b3b3b !important; color:#fff !important; border:1px solid #555 !important;
+    }
+    html.dark select:hover, html.dark button:hover { background:#4a4a4a !important; }
+    html.dark .pill { background:#444; color:#fff; }
+    html.dark .panel { background:#2a2a2a; color:#fff; }
+    html.dark .note, html.dark .sources { color:#cfcfcf; }
+
+    :root{
+      --bg:#262626; --text:#fff; --muted:#d9d9d9;
+      --card:#333; --cardText:#fff; --shadow:rgba(0,0,0,.55);
+      --accent:#4c8bf5; --icon:#fff;
+    }
+    html.light{
+      --bg:#e8edf1; --text:#1a1a1a; --muted:#555;
+      --card:#fff; --cardText:#111; --shadow:rgba(0,0,0,.12);
+      --accent:#2256c6; --icon:#000;
+    }
+
+    body{
+      margin:0; background:var(--bg); color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; min-height:100vh;
+    }
+
+   
+header{
+  position:sticky;
+  top:0;
+  z-index:200;          /* höher damit er IMMER drüber ist */
+  background:var(--bg); /* HARTER CUT – nicht mehr durchsichtig */
+  height:60px;          /* konstante Höhe */
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 16px;
+  box-shadow:0 2px 12px rgba(0,0,0,.45); /* klare Trennung */
+}
+
+
+   
+.bar{
+  width:min(980px,100% - 24px);
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  position:relative;
+}
+
+
+   
+.title{
+  font-weight:700;
+  font-size:20px;
+  letter-spacing:.2px;
+  text-align:center;
+  position:absolute;
+  left:50%;
+  transform:translateX(-50%);
+}
+
+
+    .menu-btn{
+      position:relative; border:none; background:transparent; cursor:pointer; padding:4px;
+    }
+    .menu-btn img{ height:34px; width:auto; display:block; }
+
+    .toggle{ border:none; background:transparent; cursor:pointer; padding:6px; border-radius:14px; color:var(--icon); }
+    .toggle:hover{ background:#ffffff20 }
+    .toggle svg{ width:34px; height:34px; display:block; }
+
+    .wrap{ width:min(980px,100% - 24px); margin:10px auto 28px; }
+    .panel{
+      background:var(--card); color:var(--cardText);
+      border-radius:16px; padding:16px; box-shadow:0 8px 24px var(--shadow);
+    }
+    h1{ margin:10px 6px 12px; font-size:24px }
+    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:0 6px 12px; }
+    select,button{
+      background:#fff; color:#111; border:1px solid #ddd; border-radius:10px; padding:10px 12px;
+      font-weight:600; cursor:pointer;
+    }
+    button.secondary{ background:#f3f4f6; }
+    .pill{ background:#eef2ff; color:#223; padding:6px 10px; border-radius:999px; font-size:12px }
+
+    .table{ overflow:auto; border:1px solid #ddd; border-radius:12px; }
+    table{ width:100%; border-collapse:collapse; background:#fff; color:#111; }
+    th,td{ padding:10px 10px; border-bottom:1px solid #eee; text-align:left; }
+    th{ position:sticky; top:0; background:#f8fafc; z-index:1; }
+
+    .sources{ color:var(--muted); font-size:12px; margin-top:8px; }
+    .note{ color:var(--muted); margin-top:8px; font-size:13px }
+
+    /* ===== Overlay + Side-Menu ===== */
+    .overlay{
+      position:fixed; inset:0; background:rgba(0,0,0,.5);
+      opacity:0; pointer-events:none; transition:opacity .25s ease; z-index:900;
+    }
+    .overlay.open{ opacity:1; pointer-events:auto; }
+
+    .side-menu{
+      position:fixed; top:0; left:0; height:100vh; width:50vw; max-width:520px; min-width:280px;
+      background:#333; color:#f1f1f1; border-right:1px solid #3f3f3f;
+      transform:translateX(-100%); transition:transform .28s ease; z-index:1000; display:flex; flex-direction:column;
+    }
+    .side-menu.open{ transform:translateX(0); }
+    .menu-header{ display:flex; justify-content:space-between; align-items:center; padding:14px 16px; border-bottom:1px solid #444; }
+    .menu-close{ background:transparent; border:1px solid #555; color:#f1f1f1; border-radius:10px; padding:6px 10px; cursor:pointer; }
+    .menu-close:hover{ background:#3a3a3a; }
+    .menu-list{ list-style:none; padding:0; margin:0; }
+    .menu-item{ padding:12px 16px; border-bottom:1px solid #3f3f3f; cursor:pointer; }
+    .menu-item:hover{ background:#3a3a3a; }
+
+    /* ===== Dropdown „Lernen“ (NEU) ===== */
+    .menu-group{
+      padding:14px 16px; border-bottom:1px solid #3f3f3f; cursor:pointer;
+      display:flex; justify-content:space-between; align-items:center; user-select:none;
+    }
+    .menu-group:hover{ background:#3a3a3a; }
+    .caret{ transition:.25s; }
+    .submenu{
+      max-height:0; overflow:hidden; background:#2c2c2c; transition:max-height .28s ease;
+    }
+    .submenu.open{ max-height:300px; }
+    .submenu-item{
+      padding:12px 32px; border-bottom:1px solid #3a3a3a; cursor:pointer;
+    }
+    .submenu-item:hover{ background:#353535; }
+  </style>
+</head>
+<body>
+
+  <!-- Overlay + Side-In Menü -->
+  <div id="overlay" class="overlay"></div>
+
+  <nav id="sideMenu" class="side-menu" aria-label="Hauptmenü">
+    <div class="menu-header">
+      <strong>Menü</strong>
+      <button id="menuClose" class="menu-close">✕</button>
+    </div>
+
+    <ul class="menu-list">
+      <li class="menu-item" onclick="go('index.html')">Start</li>
+
+      <!-- 📘 Lernen – aufklappbar -->
+      <li class="menu-group" id="lernenToggle">
+        <span>📘 Lernen</span>
+        <span class="caret">▶</span>
+      </li>
+      <div class="submenu" id="lernenMenu">
+        <div class="submenu-item" onclick="go('fischkunde.html')">Fischkunde</div>
+        <div class="submenu-item" onclick="go('pruefungsfragen.html')">Prüfungsfragen</div>
+        <div class="submenu-item" onclick="go('rutenbau.html')">Rutenbau</div>
+      </div>
+
+      <li class="menu-item" onclick="go('schonzeiten.html')">Schonzeiten</li>
+    </ul>
+  </nav>
+
+  <header>
+    <div class="bar">
+      <!-- Links: Menü-Button -->
+      <button class="menu-btn" id="menuButton" aria-label="Menü öffnen">
+        <img src="img/Menü.png" alt="Menü" />
+      </button>
+
+      <!-- Mitte: Titel -->
+      <div class="title">Schonzeiten&nbsp;&amp;&nbsp;Mindestmaße</div>
+
+      <!-- Rechts: Theme-Toggle -->
+      <button id="themeBtn" class="toggle" aria-label="Theme umschalten" title="Theme umschalten">
+        <span id="themeIcon" aria-hidden="true"></span>
+      </button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="panel" aria-label="Schonzeiten-Auswahl">
+      <h1>Bundesland auswählen</h1>
+      <div class="row">
+        <label for="stateSelect">Bundesland:</label>
+        <select id="stateSelect"></select>
+        <button class="secondary" id="gpsBtn">📍 automatisch erkennen</button>
+        <span id="stateBadge" class="pill" style="display:none;"></span>
+      </div>
+
+      <div class="table">
+        <table aria-describedby="sources">
+          <thead>
+            <tr><th>Art</th><th>Schonzeit</th><th>Mindestmaß</th></tr>
+          </thead>
+          <tbody id="rulesBody">
+            <tr><td colspan="3">Lade Daten…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="sources" class="sources"></div>
+      <div class="note">⚠️ „–“ bedeutet: landesweit nicht geregelt/keine gesetzliche Vorgabe (lokale Gewässerregeln können strenger sein).</div>
+    </section>
+  </main>
+
+
+  <script>
+    /* Theme */
+    (function(){
+      const saved = localStorage.getItem('theme') || 'dark';
+      document.documentElement.classList.add(saved);
+      setIcon(saved);
+      document.getElementById('themeBtn').addEventListener('click', ()=>{
+        const html=document.documentElement;
+        const next=html.classList.contains('dark')?'light':'dark';
+        html.classList.remove('dark','light'); html.classList.add(next);
+        localStorage.setItem('theme', next);
+        setIcon(next);
+      });
+      function setIcon(mode){
+        const el = document.getElementById('themeIcon');
+        el.innerHTML = mode==='dark'
+          ? '<svg viewBox="0 0 24 24" fill="none" stroke="var(--icon)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>'
+          : '<svg viewBox="0 0 24 24" fill="var(--icon)"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>';
+      }
+    })();
+
+   
+/* Slide-In-Menü */
+    const menuBtn = document.getElementById('menuButton');
+    const sideMenu = document.getElementById('sideMenu');
+    const overlay  = document.getElementById('overlay');
+    const menuClose= document.getElementById('menuClose');
+
+    function openMenu(){ sideMenu.classList.add('open'); overlay.classList.add('open'); }
+    function closeMenu(){ sideMenu.classList.remove('open'); overlay.classList.remove('open'); }
+
+    menuBtn.addEventListener('click', openMenu);
+    menuClose.addEventListener('click', closeMenu);
+    overlay.addEventListener('click', closeMenu);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
+
+    function go(url){ window.location.href=url; }
+
+    /* Dropdown „Lernen“ – auf/zu */
+    const lernenToggle = document.getElementById('lernenToggle');
+    const lernenMenu   = document.getElementById('lernenMenu');
+    const caret        = lernenToggle.querySelector('.caret');
+
+    lernenToggle.addEventListener('click', ()=>{
+      lernenMenu.classList.toggle('open');
+      caret.style.transform = lernenMenu.classList.contains('open') ? 'rotate(90deg)' : 'rotate(0deg)';
+    });
+
+    /* =========================
+       INTEGRIERTE DATENBANK (16 BL × 25 Arten)
+       Artenset (25):
+       Hecht, Zander, Barsch, Wels, Rapfen,
+       Karpfen, Schleie, Karausche, Giebel, Brachse/Brasse,
+       Rotfeder, Rotauge, Aland,
+       Bachforelle, Regenbogenforelle, Meerforelle, Seeforelle, Bachsaibling, Lachs,
+       Quappe, Barbe, Hasel, Nase,
+       Europäischer Flusskrebs, Signalkrebs
+    ========================== */
+    const A = {
+      HECHT:"Hecht", ZANDER:"Zander", BARSCH:"Barsch", WELS:"Wels / Waller", RAPFEN:"Rapfen",
+      KARPFEN:"Karpfen", SCHLEIE:"Schleie", KARAUSCHE:"Karausche", GIEBEL:"Giebel", BRASSE:"Brasse / Brachse",
+      ROTFEDER:"Rotfeder", ROTAUGE:"Rotauge", ALAND:"Aland",
+      BACHF:"Bachforelle", REGENB:"Regenbogenforelle", MEERF:"Meerforelle", SEEF:"Seeforelle", SAIB:"Saibling / Bachsaibling", LACHS:"Lachs",
+      QUAPPE:"Quappe", BARBE:"Barbe", HASEL:"Hasel", NASE:"Nase",
+      FLUSSK:"Europäischer Flusskrebs", SIGNAL:"Signalkrebs"
+    };
+
+    /* Hilfsfunktion */
+    const R = (art, schonzeit, mm) => ({art, schonzeit, mm});
+
+    /* Daten: pro Land nur verlässlich belegte Regeln gesetzt; ansonsten „–“.
+       Quellen sind unten verlinkt und gelten für das gesamte Länder-Set. */
+
+    const DB = {
+      states: [
+
+        /* — NRW — */
+        { name:"Nordrhein-Westfalen",
+          rules:[
+            R(A.HECHT,"15.02–30.04","45 cm"),
+            R(A.ZANDER,"01.04–31.05","40 cm"),
+            R(A.BARSCH,"–","–"),
+            R(A.WELS,"–","–"),
+            R(A.RAPFEN,"–","–"),
+            R(A.KARPFEN,"–","35 cm"),
+            R(A.SCHLEIE,"–","25 cm"),
+            R(A.KARAUSCHE,"–","–"),
+            R(A.GIEBEL,"–","–"),
+            R(A.BRASSE,"–","–"),
+            R(A.ROTFEDER,"–","–"),
+            R(A.ROTAUGE,"–","–"),
+            R(A.ALAND,"–","25 cm"),
+            R(A.BACHF,"20.10–15.03","25 cm"),
+            R(A.REGENB,"–","–"),
+            R(A.MEERF,"ganzjährig geschont","–"),
+            R(A.SEEF,"20.10–15.03","50 cm"),
+            R(A.SAIB,"20.10–15.03","30 cm"),
+            R(A.LACHS,"ganzjährig geschont","–"),
+            R(A.QUAPPE,"–","–"),
+            R(A.BARBE,"15.05–15.06","35 cm"),
+            R(A.HASEL,"–","–"),
+            R(A.NASE,"01.03–30.04","30 cm"),
+            R(A.FLUSSK,"ganzjährig geschont","–"),
+            R(A.SIGNAL,"–","–")
+          ],
+          sources:[
+            {label:"NRW (schonzeiten.de)", url:"https://schonzeiten.de/schonzeiten-fische-nrw-nordrhein-westfalen-angeln-mindestmasse/"},
+            {label:"AV‑NDS: NRW‑Tabelle", url:"https://www.av-nds.de/faq/welche-schonmasse-und-schonzeiten-gelten-fuer-fische-in-nordrhein-westfalen/"},
+            {label:"Angelmagazin NRW", url:"https://angelmagazin.de/schonzeiten/nordrhein-westfalen/"}
+          ]
+        },
+
+        /* — Niedersachsen — */
+        { name:"Niedersachsen",
+          rules:[
+            R(A.HECHT,"01.02–15.04","40 cm"),
+            R(A.ZANDER,"15.03–30.04","35 cm"),
+            R(A.BARSCH,"–","–"),
+            R(A.WELS,"–","50 cm"),
+            R(A.RAPFEN,"(Satzfische) –","40 cm"),
+            R(A.KARPFEN,"–","35 cm"),
+            R(A.SCHLEIE,"–","–"),
+            R(A.KARAUSCHE,"ganzjährig geschont","–"),
+            R(A.GIEBEL,"–","–"),
+            R(A.BRASSE,"–","–"),
+            R(A.ROTFEDER,"–","–"),
+            R(A.ROTAUGE,"–","–"),
+            R(A.ALAND,"–","–"),
+            R(A.BACHF,"15.10–15.02","25 cm"),
+            R(A.REGENB,"–","25 cm"),
+            R(A.MEERF,"(Satzfische) 15.10–15.02","40 cm"),
+            R(A.SEEF,"–","–"),
+            R(A.SAIB,"–","–"),
+            R(A.LACHS,"(Satzfische) 15.10–15.03","50 cm"),
+            R(A.QUAPPE,"–","35 cm"),
+            R(A.BARBE,"–","35 cm"),
+            R(A.HASEL,"–","–"),
+            R(A.NASE,"(Satzfische) –","25 cm"),
+            R(A.FLUSSK,"ganzjährig geschont","–"),
+            R(A.SIGNAL,"–","–")
+          ],
+          sources:[
+            {label:"Bifio / Nds.", url:"https://www.laves.niedersachsen.de/download/42526/Binnenfischereiordnung.pdf"},
+            {label:"AV‑NDS – Übersicht", url:"https://www.av-nds.de/faq/welche-schonzeiten-und-schonmasse-sind-gesetzlich-in-niedersachsen-an-binnengewaessern-vorgeschrieben/"}
+          ]
+        },
+
+        /* — Bayern — */
+        { name:"Bayern",
+          rules:[
+            R(A.HECHT,"15.02–30.04","50 cm"),
+            R(A.ZANDER,"15.02–30.04","50 cm"),
+            R(A.BARSCH,"–","–"),
+            R(A.WELS,"–","–"),
+            R(A.RAPFEN,"01.03–30.04","40 cm"),
+            R(A.KARPFEN,"–","35 cm"),
+            R(A.SCHLEIE,"01.05–30.06","26 cm"),
+            R(A.KARAUSCHE,"ganzjährig geschont","–"),
+            R(A.GIEBEL,"–","–"),
+            R(A.BRASSE,"–","–"),
+            R(A.ROTFEDER,"–","–"),
+            R(A.ROTAUGE,"–","–"),
+            R(A.ALAND,"–","–"),
+            R(A.BACHF,"01.10–15.03","26 cm"),
+            R(A.REGENB,"15.12–15.03","26 cm"),
+            R(A.MEERF,"ganzjährig geschont (je nach Einzugsgebiet)","–"),
+            R(A.SEEF,"01.10–15.03","60 cm"),
+            R(A.SAIB,"–","–"),
+            R(A.LACHS,"ganzjährig geschont","–"),
+            R(A.QUAPPE,"–","40 cm"),
+            R(A.BARBE,"01.05–30.06","40 cm"),
+            R(A.HASEL,"01.03–30.04","–"),
+            R(A.NASE,"01.03–30.04","30 cm"),
+            R(A.FLUSSK,"–","–"),
+            R(A.SIGNAL,"–","–")
+          ],
+          sources:[
+            {label:"AVBayFiG – Anlage", url:"https://www.gesetze-bayern.de/Content/Document/BayAVFiG-ANL_1"},
+            {label:"schonzeiten.de – Bayern", url:"https://schonzeiten.de/schonzeiten-fische-bayern-angeln-mindestmasse/"}
+          ]
+        },
+
+        /* — Baden‑Württemberg — */
+        { name:"Baden-Württemberg",
+          rules:[
+            R(A.HECHT,"15.02–15.05 (Main: 01.02–30.04)","50 cm"),
+            R(A.ZANDER,"01.04–15.05 (Main: 01.02–30.04)","45–50 cm"),
+            R(A.BARSCH,"–","–"),
+            R(A.WELS,"–","–"),
+            R(A.RAPFEN,"01.03–31.05 (Donau‑System)","40 cm"),
+            R(A.KARPFEN,"–","35 cm"),
+            R(A.SCHLEIE,"15.05–30.06","25 cm"),
+            R(A.KARAUSCHE,"–","–"),
+            R(A.GIEBEL,"–","–"),
+            R(A.BRASSE,"–","–"),
+            R(A.ROTFEDER,"–","–"),
+            R(A.ROTAUGE,"–","–"),
+            R(A.ALAND,"01.04–31.05","25 cm"),
+            R(A.BACHF,"01.10–28.02 (Hochrhein 35 cm; sonst 20–25 cm)","20–35 cm"),
+            R(A.REGENB,"01.10–28.02","–"),
+            R(A.MEERF,"ganzjährig geschont","–"),
+            R(A.SEEF,"01.10–28.02","50 cm"),
+            R(A.SAIB,"01.10–28.02","–"),
+            R(A.LACHS,"ganzjährig geschont","–"),
+            R(A.QUAPPE,"01.11–28.02","30 cm"),
+            R(A.BARBE,"01.05–15.06","40 cm"),
+            R(A.HASEL,"–","–"),
+            R(A.NASE,"15.03–31.05","35 cm"),
+            R(A.FLUSSK,"(Edelkrebs: saisonal; sonst Schutz)","–"),
+            R(A.SIGNAL,"–","–")
+          ],
+          sources:[
+            {label:"schonzeiten.de – BW", url:"https://schonzeiten.de/schonzeiten-fische-bw-baden-wuerttemberg-angeln-mindestmasse/"},
+            {label:"Fischapp BW", url:"https://www.fischapp.com/schonzeiten-und-mindestmasse-fuer-fische-in-baden-wuerttemberg/"}
+          ]
+        },
+
+        /* — Berlin — */
+        { name:"Berlin",
+          rules:[
+            R(A.HECHT,"01.01–30.04 (Handangel)","45 cm"),
+            R(A.ZANDER,"01.01–31.05 (Handangel)","45 cm"),
+            R(A.BARSCH,"–","–"),
+            R(A.WELS,"–","75 cm"),
+            R(A.RAPFEN,"01.04–30.06","40 cm"),
+            R(A.KARPFEN,"–","35 cm"),
+            R(A.SCHLEIE,"–","25 cm"),
+            R(A.KARAUSCHE,"ganzjährig geschont","–"),
+            R(A.GIEBEL,"–","–"),
+            R(A.BRASSE,"–","–"),
+            R(A.ROTFEDER,"–","–"),
+            R(A.ROTAUGE,"–","–"),
+            R(A.ALAND,"–","30 cm"),
+            R(A.BACHF,"01.10–30.04","30 cm"),
+            R(A.REGENB,"01.10–30.04","25 cm"),
+            R(A.MEERF,"ganzjährig geschont","–"),
+            R(A.SEEF,"01.10–31.05","60 cm"),
+            R(A.SAIB,"01.10–30.04","25 cm"),
+            R(A.LACHS,"ganzjährig geschont","–"),
+            R(A.QUAPPE,"–","30 cm"),
+            R(A.BARBE,"ganzjährig geschont","–"),
+            R(A.HASEL,"–","15 cm"),
+            R(A.NASE,"ganzjährig geschont","–"),
+            R(A.FLUSSK,"ganzjährig geschont","–"),
+            R(A.SIGNAL,"–","8 cm")
+          ],
+          sources:[
+            {label:"schonzeiten.de – Berlin", url:"https://schonzeiten.de/schonzeiten-fische-berlin-angeln-mindestmasse/"},
+            {label:"Berlin.de – LFischO Auszüge", url:"https://www.berlin.de/fischereiamt/angelfischen/mindestmasse-und-schonzeiten/"}
+          ]
+        },
+
+        /* — Brandenburg — */
+        { name:"Brandenburg",
+          rules:[
+            R(A.HECHT,"01.02–31.03 (Handangel)","45 cm"),
+            R(A.ZANDER,"01.04–31.05 (Handangel)","45 cm"),
+            R(A.BARSCH,"–","–"),
+            R(A.WELS,"–","–"),
+            R(A.RAPFEN,"01.04–30.06","40 cm"),
+            R(A.KARPFEN,"–","35 cm"),
+            R(A.SCHLEIE,"–","25 cm"),
+            R(A.KARAUSCHE,"–","–"),
+            R(A.GIEBEL,"–","–"),
+            R(A.BRASSE,"–","–"),
+            R(A.ROTFEDER,"–","–"),
+            R(A.ROTAUGE,"–","–"),
+            R(A.ALAND,"–","30 cm"),
+            R(A.BACHF,"16.10–15.04","30 cm"),
+            R(A.REGENB,"–","–"),
+            R(A.MEERF,"(Satzfisch) 16.10–15.04 / sonst ganzjährig geschützt","60 cm"),
+            R(A.SEEF,"(Satzfisch) 16.10–15.04 / sonst ganzjährig geschützt","60 cm"),
+            R(A.SAIB,"–","–"),
+            R(A.LACHS,"(Satzfisch) 16.10–15.04 / sonst ganzjährig geschützt","60 cm"),
+            R(A.QUAPPE,"–","30 cm"),
+            R(A.BARBE,"01.05–31.07","40 cm"),
+            R(A.HASEL,"–","15 cm"),
+            R(A.NASE,"ganzjährig geschont","–"),
+            R(A.FLUSSK,"ganzjährig geschont","–"),
+            R(A.SIGNAL,"–","–")
+          ],
+          sources:[
+            {label:"schonzeiten.de – Brandenburg", url:"https://schonzeiten.de/schonzeiten-fische-brandenburg-angeln-mindestmasse/"},
+            {label:"MLUK BB – Übersicht", url:"https://mleuv.brandenburg.de/sixcms/media.php/9/Schonzeiten-Fischarten-de.pdf"}
+          ]
+        },
+
+        /* — Bremen — */
+        { name:"Bremen",
+          rules:[
+            R(A.HECHT,"01.02–15.05","60 cm"),
+            R(A.ZANDER,"01.02–15.05","40 cm"),
+            R(A.BARSCH,"01.02–15.05 (Raubfisch‑SPV)","15 cm"),
+            R(A.WELS,"–","–"),
+            R(A.RAPFEN,"–","40 cm"),
+            R(A.KARPFEN,"–","–"),
+            R(A.SCHLEIE,"–","–"),
+            R(A.KARAUSCHE,"–","–"),
+            R(A.GIEBEL,"–","–"),
+            R(A.BRASSE,"–","–"),
+            R(A.ROTFEDER,"–","–"),
+            R(A.ROTAUGE,"–","–"),
+            R(A.ALAND,"–","–"),
+            R(A.BACHF,"15.10–15.03","30 cm"),
+            R(A.REGENB,"–","–"),
+            R(A.MEERF,"15.10–15.03","50 cm"),
+            R(A.SEEF,"–","–"),
+            R(A.SAIB,"–","–"),
+            R(A.LACHS,"15.10–15.03","60 cm"),
+            R(A.QUAPPE,"–","35 cm"),
+            R(A.BARBE,"–","–"),
+            R(A.HASEL,"–","–"),
+            R(A.NASE,"–","–"),
+            R(A.FLUSSK,"(Edelkrebs) 01.11–30.06","11 cm"),
+            R(A.SIGNAL,"–","–")
+          ],
+          sources:[
+            {label:"schonzeiten.de – Bremen", url:"https://schonzeiten.de/schonzeiten-fische-bremen-angeln-mindestmasse/"},
+            {label:"AngelFische – Bremen", url:"https://angel-fische.de/schonzeiten-bremen/"}
+          ]
+        },
+
+        /* — Hamburg — */
+        { name:"Hamburg",
+          rules:[
+            R(A.HECHT,"01.02–31.05","45–75 cm (Entnahmefenster)"),
+            R(A.ZANDER,"01.02–31.05","45–75 cm (Entnahmefenster)"),
+            R(A.BARSCH,"–","10–35 cm (Fenster, Gewässerabh.)"),
+            R(A.WELS,"–","–"),
+            R(A.RAPFEN,"–","50–70 cm (Fenster)"),
+            R(A.KARPFEN,"–","35 cm"),
+            R(A.SCHLEIE,"–","25–45 cm (Fenster)"),
+            R(A.KARAUSCHE,"–","–"),
+            R(A.GIEBEL,"–","–"),
+            R(A.BRASSE,"–","–"),
+            R(A.ROTFEDER,"–","–"),
+            R(A.ROTAUGE,"–","–"),
+            R(A.ALAND,"–","–"),
+            R(A.BACHF,"15.10–15.02","20–40 cm (Fenster)"),
+            R(A.REGENB,"–","–"),
+            R(A.MEERF,"15.10–15.02","40–65 cm (Fenster)"),
+            R(A.SEEF,"–","–"),
+            R(A.SAIB,"–","–"),
+            R(A.LACHS,"ganzjährig geschont","–"),
+            R(A.QUAPPE,"–","30–50 cm (Fenster)"),
+            R(A.BARBE,"–","–"),
+            R(A.HASEL,"ganzjährig geschont","–"),
+            R(A.NASE,"–","–"),
+            R(A.FLUSSK,"ganzjährig geschont","–"),
+            R(A.SIGNAL,"–","–")
+          ],
+          sources:[
+            {label:"schonzeiten.de – Hamburg", url:"https://schonzeiten.de/schonzeiten-fische-hamburg-angeln-mindestmasse/"},
+            {label:"LAV HH – PDF/Tabellen", url:"https://anglerverband-hh.de/angeln-veranstaltungen/mindestmasse-schonzeiten"}
+          ]
+        },
+
+        /* — Hessen — */
+        { name:"Hessen",
+          rules:[
+            R(A.HECHT,"01.02–15.04","50–90 cm (Fenster)"),
+            R(A.ZANDER,"–","50 cm"),
+            R(A.BARSCH,"–","–"),
+            R(A.WELS,"–","50 cm"),
+            R(A.RAPFEN,"–","–"),
+            R(A.KARPFEN,"15.03–31.05 (Wildform)","45–60 cm (Fenster)"),
+            R(A.SCHLEIE,"01.05–30.06","25–45 cm (Fenster)"),
+            R(A.KARAUSCHE,"ganzjährig geschont","–"),
+            R(A.GIEBEL,"–","–"),
+            R(A.BRASSE,"–","–"),
+            R(A.ROTFEDER,"15.03–31.05","20–30 cm (Fenster)"),
+            R(A.ROTAUGE,"–","–"),
+            R(A.ALAND,"–","–"),
+            R(A.BACHF,"01.10–31.03","25–60 cm (Fenster)"),
+            R(A.REGENB,"01.10–31.03","25–60 cm (Fenster)"),
+            R(A.MEERF,"01.10–31.03","25–60 cm (Fenster)"),
+            R(A.SEEF,"01.10–31.03","25–60 cm (Fenster)"),
+            R(A.SAIB,"–","–"),
+            R(A.LACHS,"ganzjährig geschont","–"),
+            R(A.QUAPPE,"ganzjährig geschont","–"),
+            R(A.BARBE,"–","40–60 cm (Fenster)"),
+            R(A.HASEL,"–","–"),
+            R(A.NASE,"15.03–30.04","25–40 cm (Fenster)"),
+            R(A.FLUSSK,"ganzjährig geschont","–"),
+            R(A.SIGNAL,"–","–")
+          ],
+          sources:[
+            {label:"schonzeiten.de – Hessen", url:"https://schonzeiten.de/schonzeiten-fische-hessen-angeln-mindestmasse/"},
+            {label:"fischapp – Hessen", url:"https://www.fischapp.com/schonzeiten-und-mindestmasse-in-hessen/"}
+          ]
+        },
+
+        /* — Mecklenburg‑Vorpommern (Binnen, Kern) — */
+        { name:"Mecklenburg-Vorpommern",
+          rules:[
+            R(A.HECHT,"– (Binnen)","45 cm"),
+            R(A.ZANDER,"– (Binnen)","45 cm"),
+            R(A.BARSCH,"–","17 cm"),
+            R(A.WELS,"01.05–30.06","70 cm"),
+            R(A.RAPFEN,"–","35 cm"),
+            R(A.KARPFEN,"–","40 cm"),
+            R(A.SCHLEIE,"–","25 cm"),
+            R(A.KARAUSCHE,"–","–"),
+            R(A.GIEBEL,"–","–"),
+            R(A.BRASSE,"–","–"),
+            R(A.ROTFEDER,"–","–"),
+            R(A.ROTAUGE,"–","–"),
+            R(A.ALAND,"–","25 cm"),
+            R(A.BACHF,"01.10–31.03","30 cm"),
+            R(A.REGENB,"–","–"),
+            R(A.MEERF,"01.09–31.03 (Binnen)","45 cm"),
+            R(A.SEEF,"–","–"),
+            R(A.SAIB,"–","–"),
+            R(A.LACHS,"01.09–31.03","60 cm"),
+            R(A.QUAPPE,"01.01–15.02","30 cm"),
+            R(A.BARBE,"ganzjährig geschont","–"),
+            R(A.HASEL,"01.03–31.05","–"),
+            R(A.NASE,"ganzjährig geschont","–"),
+            R(A.FLUSSK,"(Krebs M‑V) –","–"),
+            R(A.SIGNAL,"Sumpf/Signalkrebs teils 11 cm","11 cm")
+          ],
+          sources:[
+            {label:"schonzeiten.de – MV (Binnen/Küste)", url:"https://schonzeiten.de/schonzeiten-mecklenburg-vorpommern-fische/"},
+            {label:"LALLF – amtliche Liste", url:"https://www.lallf.de/fischerei/fischereischutz/mindestmasseschonzeiten/"}
+          ]
+        },
+
+        /* — Rheinland‑Pfalz — */
+        { name:"Rheinland-Pfalz",
+          rules:[
+            R(A.HECHT,"01.02–31.05","50 cm"),
+            R(A.ZANDER,"15.03–15.05 (Lahn: 01.04–31.05)","45 cm"),
+            R(A.BARSCH,"–","–"),
+            R(A.WELS,"–","–"),
+            R(A.RAPFEN,"–","–"),
+            R(A.KARPFEN,"–","35 cm"),
+            R(A.SCHLEIE,"–","25 cm"),
+            R(A.KARAUSCHE,"ganzjährig geschont","–"),
+            R(A.GIEBEL,"–","–"),
+            R(A.BRASSE,"–","–"),
+            R(A.ROTFEDER,"–","15 cm"),
+            R(A.ROTAUGE,"–","15 cm"),
+            R(A.ALAND,"–","–"),
+            R(A.BACHF,"15.10–15.03","25 cm"),
+            R(A.REGENB,"–","–"),
+            R(A.MEERF,"ganzjährig geschont","–"),
+            R(A.SEEF,"–","60 cm"),
+            R(A.SAIB,"–","–"),
+            R(A.LACHS,"ganzjährig geschont","–"),
+            R(A.QUAPPE,"–","–"),
+            R(A.BARBE,"01.05–15.06","35 cm"),
+            R(A.HASEL,"–","15 cm"),
+            R(A.NASE,"15.03–30.04 (außer Rhein/Mosel/Lahn)","20–30 cm"),
+            R(A.FLUSSK,"ganzjährig geschont","–"),
+            R(A.SIGNAL,"–","–")
+          ],
+          sources:[
+            {label:"schonzeiten.de – RLP", url:"https://schonzeiten.de/schonzeiten-fische-rlp-rheinland-pfalz-angeln-mindestmasse/"},
+            {label:"Fischlexikon – RLP", url:"https://www.fischlexikon.eu/sportfischen/schonzeiten/rheinland-pfalz.php"}
+          ]
+        },
+
+        /* — Saarland — */
+        { name:"Saarland",
+          rules:[
+            R(A.HECHT,"15.02–31.05","50 cm"),
+            R(A.ZANDER,"15.02–31.05","45 cm"),
+            R(A.BARSCH,"–","–"),
+            R(A.WELS,"–","–"),
+            R(A.RAPFEN,"ganzjährig geschont","–"),
+            R(A.KARPFEN,"–","35 cm (Zuchtformen)"),
+            R(A.SCHLEIE,"–","25 cm"),
+            R(A.KARAUSCHE,"–","–"),
+            R(A.GIEBEL,"–","–"),
+            R(A.BRASSE,"–","–"),
+            R(A.ROTFEDER,"–","–"),
+            R(A.ROTAUGE,"–","–"),
+            R(A.ALAND,"–","–"),
+            R(A.BACHF,"01.10–31.03","25 cm"),
+            R(A.REGENB,"–","–"),
+            R(A.MEERF,"ganzjährig geschont","–"),
+            R(A.SEEF,"–","–"),
+            R(A.SAIB,"–","–"),
+            R(A.LACHS,"ganzjährig geschont","–"),
+            R(A.QUAPPE,"ganzjährig geschont","–"),
+            R(A.BARBE,"15.03–15.06","40 cm"),
+            R(A.HASEL,"–","–"),
+            R(A.NASE,"15.03–15.06","35 cm"),
+            R(A.FLUSSK,"ganzjährig geschont","–"),
+            R(A.SIGNAL,"–","–")
+          ],
+          sources:[
+            {label:"schonzeiten.de – Saarland", url:"https://schonzeiten.de/schonzeiten-fische-saarland-angeln-mindestmasse/"},
+            {label:"fischapp – Saarland", url:"https://www.fischapp.com/schonzeiten-und-mindestmasse-im-saarland/"}
+          ]
+        },
+
+        /* — Sachsen — */
+        { name:"Sachsen",
+          rules:[
+            R(A.HECHT,"01.02–30.04","50 cm"),
+            R(A.ZANDER,"01.02–31.05","50 cm"),
+            R(A.BARSCH,"–","–"),
+            R(A.WELS,"–","–"),
+            R(A.RAPFEN,"01.01–31.05","40 cm"),
+            R(A.KARPFEN,"–","40 cm"),
+            R(A.SCHLEIE,"–","25 cm"),
+            R(A.KARAUSCHE,"01.02–30.06","15 cm"),
+            R(A.GIEBEL,"–","–"),
+            R(A.BRASSE,"–","–"),
+            R(A.ROTFEDER,"(nur Fließgew.) –","20 cm"),
+            R(A.ROTAUGE,"–","–"),
+            R(A.ALAND,"–","20 cm"),
+            R(A.BACHF,"01.10–30.04","28 cm"),
+            R(A.REGENB,"01.10–30.04 (nur Fließgew.)","25 cm"),
+            R(A.MEERF,"01.10–30.04","60 cm"),
+            R(A.SEEF,"01.10–30.04","60 cm"),
+            R(A.SAIB,"01.10–30.04","28 cm"),
+            R(A.LACHS,"01.10–30.04","60 cm"),
+            R(A.QUAPPE,"ganzjährig geschont (Elbe/Mulde/Weiße Elster: 01.01–31.03, 30 cm)","—"),
+            R(A.BARBE,"15.04–30.06","50 cm"),
+            R(A.HASEL,"–","—"),
+            R(A.NASE,"ganzjährig geschont (Elbe: 01.01–15.06, 40 cm)","40 cm (Elbe)"),
+            R(A.FLUSSK,"ganzjährig geschont","–"),
+            R(A.SIGNAL,"–","–")
+          ],
+          sources:[
+            {label:"schonzeiten.de – Sachsen", url:"https://schonzeiten.de/schonzeiten-fische-sachsen-angeln-mindestmasse/"},
+            {label:"SächsFischVO – Tabelle (PDF)", url:"https://www.fischerei.sachsen.de/download/Fischschonzeiten_nach_SaechsFischVO_2022_farbig.pdf"}
+          ]
+        },
+
+        /* — Sachsen‑Anhalt — */
+        { name:"Sachsen-Anhalt",
+          rules:[
+            R(A.HECHT,"15.02–30.04","50 cm"),
+            R(A.ZANDER,"15.02–31.05","50 cm"),
+            R(A.BARSCH,"–","–"),
+            R(A.WELS,"–","–"),
+            R(A.RAPFEN,"–","40 cm"),
+            R(A.KARPFEN,"–","35 cm"),
+            R(A.SCHLEIE,"–","25 cm"),
+            R(A.KARAUSCHE,"–","–"),
+            R(A.GIEBEL,"–","–"),
+            R(A.BRASSE,"–","–"),
+            R(A.ROTFEDER,"–","–"),
+            R(A.ROTAUGE,"–","–"),
+            R(A.ALAND,"–","–"),
+            R(A.BACHF,"15.09–31.03","25 cm"),
+            R(A.REGENB,"–","25 cm"),
+            R(A.MEERF,"ganzjährig geschont","–"),
+            R(A.SEEF,"–","–"),
+            R(A.SAIB,"–","–"),
+            R(A.LACHS,"ganzjährig geschont","–"),
+            R(A.QUAPPE,"–","30 cm"),
+            R(A.BARBE,"01.04–30.06","45 cm"),
+            R(A.HASEL,"–","–"),
+            R(A.NASE,"ganzjährig geschont","–"),
+            R(A.FLUSSK,"ganzjährig geschont","–"),
+            R(A.SIGNAL,"–","–")
+          ],
+          sources:[
+            {label:"schonzeiten.de – Sachsen‑Anhalt", url:"https://schonzeiten.de/schonzeiten-fische-sachsen-anhalt-angeln-mindestmasse/"},
+            {label:"Fischereiberater LSA", url:"https://www.fischereiberater-lsa.de/aktuelles/schonzeiten-mindestmasse"}
+          ]
+        },
+
+        /* — Schleswig‑Holstein (Binnen) — */
+        { name:"Schleswig-Holstein",
+          rules:[
+            R(A.HECHT,"15.02–30.04 (Binnen)","45 cm"),
+            R(A.ZANDER,"15.03–15.05 (Binnen)","45 cm"),
+            R(A.BARSCH,"–","–"),
+            R(A.WELS,"01.05–30.06","–"),
+            R(A.RAPFEN,"–","50 cm"),
+            R(A.KARPFEN,"–","35 cm"),
+            R(A.SCHLEIE,"–","25 cm"),
+            R(A.KARAUSCHE,"–","–"),
+            R(A.GIEBEL,"–","–"),
+            R(A.BRASSE,"–","–"),
+            R(A.ROTFEDER,"–","–"),
+            R(A.ROTAUGE,"–","–"),
+            R(A.ALAND,"–","–"),
+            R(A.BACHF,"01.10–28.02","30 cm"),
+            R(A.REGENB,"–","–"),
+            R(A.MEERF,"01.10–28.02 (Binnen)","40 cm"),
+            R(A.SEEF,"–","–"),
+            R(A.SAIB,"–","–"),
+            R(A.LACHS,"01.10–28.02","60 cm"),
+            R(A.QUAPPE,"01.01–28.02","35 cm"),
+            R(A.BARBE,"ganzjährig geschont","–"),
+            R(A.HASEL,"01.01–31.12 (div. Schutz)","–"),
+            R(A.NASE,"–","–"),
+            R(A.FLUSSK,"(Flusskrebs) 01.10–31.07","12 cm"),
+            R(A.SIGNAL,"–","–")
+          ],
+          sources:[
+            {label:"schonzeiten.de – SH (Binnen/Küste)", url:"https://schonzeiten.de/schonzeiten-schleswig-holstein-fische/"},
+            {label:"LAV‑SH – Tabellen", url:"https://lav-sh.de/service/lsfv-berichte-und-publikationen/"}
+          ]
+        },
+
+        /* — Thüringen — */
+        { name:"Thüringen",
+          rules:[
+            R(A.HECHT,"15.02–30.04","45 cm"),
+            R(A.ZANDER,"01.04–31.05","45 cm"),
+            R(A.BARSCH,"–","–"),
+            R(A.WELS,"–","50 cm"),
+            R(A.RAPFEN,"ganzjährig geschont","–"),
+            R(A.KARPFEN,"–","35 cm"),
+            R(A.SCHLEIE,"–","25 cm"),
+            R(A.KARAUSCHE,"01.04–31.05 (an Wegen gelistet)","15 cm"),
+            R(A.GIEBEL,"–","–"),
+            R(A.BRASSE,"–","–"),
+            R(A.ROTFEDER,"–","15 cm"),
+            R(A.ROTAUGE,"–","–"),
+            R(A.ALAND,"(teils als „ganzjährig“ gelistet)","–"),
+            R(A.BACHF,"01.10–31.03","25 cm"),
+            R(A.REGENB,"(ggf. 01.02–31.03 bei gemeinsamem Vorkommen)*","25 cm"),
+            R(A.MEERF,"ganzjährig geschont","–"),
+            R(A.SEEF,"–","–"),
+            R(A.SAIB,"01.10–31.03","25 cm"),
+            R(A.LACHS,"ganzjährig geschont","–"),
+            R(A.QUAPPE,"ganzjährig geschont","–"),
+            R(A.BARBE,"ganzjährig geschont","–"),
+            R(A.HASEL,"01.04–31.05","20 cm"),
+            R(A.NASE,"ganzjährig geschont","–"),
+            R(A.FLUSSK,"ganzjährig geschont","–"),
+            R(A.SIGNAL,"–","–")
+          ],
+          sources:[
+            {label:"schonzeiten.de – Thüringen", url:"https://schonzeiten.de/schonzeiten-fische-thueringen-angeln-mindestmasse/"},
+            {label:"Fischlexikon – Thüringen", url:"https://www.fischlexikon.eu/sportfischen/schonzeiten/thueringen.php"}
+          ]
+        }
+
+      ]
+    };
+
+    /* UI-Logik */
+    const select = document.getElementById('stateSelect');
+    const body   = document.getElementById('rulesBody');
+    const sourcesDiv = document.getElementById('sources');
+    const badge  = document.getElementById('stateBadge');
+
+    function initStates(){
+      select.innerHTML = DB.states.map(s=>`<option>${s.name}</option>`).join('');
+      const saved = localStorage.getItem('selectedState');
+      if(saved && DB.states.find(x=>x.name===saved)) select.value = saved;
+      render();
+    }
+
+    function render(){
+      const s = DB.states.find(x=>x.name === select.value);
+      localStorage.setItem('selectedState', s.name);
+      badge.textContent = s.name; badge.style.display = 'inline-block';
+      body.innerHTML = (s.rules && s.rules.length)
+        ? s.rules.map(r=>`<tr><td>${r.art}</td><td>${r.schonzeit || '–'}</td><td>${r.mm || '–'}</td></tr>`).join('')
+        : `<tr><td colspan="3">Keine Daten hinterlegt.</td></tr>`;
+      sourcesDiv.innerHTML = (s.sources||[]).map(src =>
+        `${src.url}${src.label}</a>`
+      ).join(' · ');
+    }
+    select.addEventListener('change', render);
+
+    // GPS → Bundesland (Nominatim)
+    document.getElementById('gpsBtn').addEventListener('click', ()=> {
+      if(!('geolocation' in navigator)){ alert('Geolocation wird nicht unterstützt.'); return; }
+      navigator.geolocation.getCurrentPosition(async pos=>{
+        try{
+          const {latitude:lat, longitude:lon} = pos.coords;
+          const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=5&addressdetails=1`;
+          const res = await fetch(url, { headers: { 'Accept-Language':'de', 'User-Agent':'AnglerApp/1.0 (Demo)'} });
+          const data = await res.json();
+          const state = data?.address?.state || data?.address?.state_district;
+          if(!state){ alert('Bundesland konnte nicht ermittelt werden.'); return; }
+          const normalized = normalizeState(state);
+          if(DB.states.find(x=>x.name===normalized)){ select.value = normalized; render(); }
+          else alert(`Erkannt: ${state} – hierfür sind (noch) keine Daten hinterlegt.`);
+        }catch(e){ alert('Reverse‑Geocoding fehlgeschlagen.'); }
+      }, err=>{ alert('GPS verweigert/fehlgeschlagen.'); }, { enableHighAccuracy:true, timeout:8000, maximumAge:0 });
+    });
+
+    function normalizeState(s){
+      const m = {
+        'Nordrhein-Westfalen':'Nordrhein-Westfalen','Niedersachsen':'Niedersachsen','Bayern':'Bayern',
+        'Baden-Württemberg':'Baden-Württemberg','Berlin':'Berlin','Brandenburg':'Brandenburg','Bremen':'Bremen',
+        'Hamburg':'Hamburg','Hessen':'Hessen','Mecklenburg-Vorpommern':'Mecklenburg-Vorpommern',
+        'Rheinland-Pfalz':'Rheinland-Pfalz','Saarland':'Saarland','Sachsen':'Sachsen',
+        'Sachsen-Anhalt':'Sachsen-Anhalt','Schleswig-Holstein':'Schleswig-Holstein','Thüringen':'Thüringen'
+      };
+      if(/nordrhein/i.test(s)) return 'Nordrhein-Westfalen';
+      if(/mecklenburg/i.test(s)) return 'Mecklenburg-Vorpommern';
+      if(/rheinland[\s-]?pfalz/i.test(s)) return 'Rheinland-Pfalz';
+      if(/sachsen-anhalt/i.test(s)) return 'Sachsen-Anhalt';
+      if(/schleswig/i.test(s)) return 'Schleswig-Holstein';
+      return m[s] || s;
+    }
+
+    initStates();
+  </script>
+
+  <!--
+    TECH-QUELLEN:
+    - Geolocation API (HTTPS + Permission): https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/getCurrentPosition  [19](https://developers.google.com/maps/documentation/javascript/geolocation)
+    - Nominatim Reverse API (address.state): https://nominatim.org/release-docs/develop/api/Reverse/  [20](https://github.com/osm-search/Nominatim/blob/master/docs/api/Reverse.md)
+
+    SACH-QUELLEN (Beispiele, nach Ländern):
+    - NRW: https://schonzeiten.de/schonzeiten-fische-nrw-nordrhein-westfalen-angeln-mindestmasse/ ; https://www.av-nds.de/faq/welche-schonmasse-und-schonzeiten-gelten-fuer-fische-in-nordrhein-westfalen/ ; https://angelmagazin.de/schonzeiten/nordrhein-westfalen/  [1](https://schonzeiten.de/schonzeiten-fische-nrw-nordrhein-westfalen-angeln-mindestmasse/)[2](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/getCurrentPosition)[3](https://angelmagazin.de/schonzeiten/nordrhein-westfalen/)V‑NDS  [5](https://angel-fische.de/schonzeiten-niedersachsen/)[21](https://schonzeiten.de/schonzeiten-niedersachsen-fische/)
+    - Bayern: AVBayFiG Anlage ; schonzeiten.de  [6](https://lfvbayern.de/fischen/angelfischerei/rechtliches/schonzeiten-schonmasse-und-co-was-sich-in-der-avbayfig-aendert-3776.html)[7](https://www.simfisch.de/schonzeiten-und-mindestmasse-in-bayern/)
+    - Baden‑Württemberg: schonzeiten.de ; fischapp.com  [8](https://schonzeiten.de/schonzeiten-fische-bw-baden-wuerttemberg-angeln-mindestmasse/)[22](https://www.fischapp.com/schonzeiten-und-mindestmasse-fuer-fische-in-baden-wuerttemberg/)
+    - Berlin: Berlin.de / LFischO ; schonzeiten.de  [9](https://www.berlin.de/fischereiamt/angelfischen/mindestmasse-und-schonzeiten/)[10](https://schonzeiten.de/schonzeiten-fische-berlin-angeln-mindestmasse/)
+    - Brandenburg: schonzeiten.de ; MLUK‑Übersicht  [11](https://schonzeiten.de/schonzeiten-fische-brandenburg-angeln-mindestmasse/)[23](https://mleuv.brandenburg.de/sixcms/media.php/9/Schonzeiten-Fischarten-de.pdf)
+    - Bremen: schonzeiten.de ; AngelFische  [13](https://schonzeiten.de/schonzeiten-fische-bremen-angeln-mindestmasse/)[24](https://angel-fische.de/schonzeiten-bremen/)
+    - Hamburg: schonzeiten.de ; LAV‑HH  [14](https://schonzeiten.de/schonzeiten-fische-hamburg-angeln-mindestmasse/)[25](https://anglerverband-hh.de/angeln-veranstaltungen/mindestmasse-schonzeiten)
+    - Hessen: schonzeiten.de ; fischapp.com  [15](https://schonzeiten.de/schonzeiten-fische-hessen-angeln-mindestmasse/)[26](https://www.fischapp.com/schonzeiten-und-mindestmasse-in-hessen/)
+    - Mecklenburg‑Vorpommern: schonzeiten.de ; LALLF  [27](https://schonzeiten.de/schonzeiten-mecklenburg-vorpommern-fische/)[16](https://www.lallf.de/fischerei/fischereischutz/mindestmasseschonzeiten/)
+    - Rheinland‑Pfalz: schonzeiten.de ; Fischlexikon  [28](https://schonzeiten.de/schonzeiten-fische-rlp-rheinland-pfalz-angeln-mindestmasse/)[29](https://www.fischlexikon.eu/sportfischen/schonzeiten/rheinland-pfalz.php)
+    - Saarland: schonzeiten.de ; fischapp.com  [30](https://schonzeiten.de/schonzeiten-fische-saarland-angeln-mindestmasse/)[31](https://www.fischapp.com/schonzeiten-und-mindestmasse-im-saarland/)
+    - Sachsen: schonzeiten.de ; SächsFischVO PDF  [32](https://schonzeiten.de/schonzeiten-fische-sachsen-angeln-mindestmasse/)[33](https://www.fischerei.sachsen.de/download/Fischschonzeiten_nach_SaechsFischVO_2022_farbig.pdf)
+    - Sachsen‑Anhalt: schonzeiten.de ; Fischereiberater LSA  [34](https://schonzeiten.de/schonzeiten-fische-sachsen-anhalt-angeln-mindestmasse/)[35](https://www.fischereiberater-lsa.de/aktuelles/schonzeiten-mindestmasse)
+    - Schleswig‑Holstein: schonzeiten.de ; LAV‑SH  [17](https://schonzeiten.de/schonzeiten-schleswig-holstein-fische/)[36](https://lav-sh.de/service/lsfv-berichte-und-publikationen/)
+    - Thüringen: schonzeiten.de ; Fischlexikon  [18](https://schonzeiten.de/schonzeiten-fische-thueringen-angeln-mindestmasse/)[37](https://www.fischlexikon.eu/sportfischen/schonzeiten/thueringen.php)
+  -->
+</body>
+</html>
