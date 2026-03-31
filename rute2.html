@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rute1 – Quiz</title>
+
+<style>
+/* ===========================================
+   THEME / DARK-LIGHT MODE
+=========================================== */
+:root{
+  --bg:#262626;
+  --text:#fff;
+  --card:#333;
+  --muted:#d9d9d9;
+  --accent:#4c8bf5;
+  --shadow:rgba(0,0,0,.55);
+  --icon:#fff;
+  --good:#2ecc71;
+  --bad:#e74c3c;
+}
+
+html.light{
+  --bg:#e8edf1;
+  --text:#1a1a1a;
+  --card:#fff;
+  --muted:#555;
+  --accent:#2256c6;
+  --shadow:rgba(0,0,0,.15);
+  --icon:#000;
+}
+
+/* Lightmode fixes */
+html.light .accordion { background:#fff; border-color:#ccc; }
+html.light .acc-header:hover { background:#e9e9e9; }
+html.light .acc-body { background:#f8f8f8; }
+html.light .option-box { background:#f3f3f3; color:#000; border-color:#ccc; }
+html.light .option-box:hover { border-color:#999; }
+html.light .option-box.selected { border-color:var(--accent); }
+html.light #resultBox { background:#fff; }
+
+/* ===========================================
+   GLOBAL
+=========================================== */
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+  transition:background .25s,color .25s;
+}
+
+/* ===========================================
+   LIGHTBOX
+=========================================== */
+.zoom-icon {
+  position:absolute;
+  top:6px;
+  right:6px;
+  background:rgba(0,0,0,0.6);
+  color:white;
+  padding:4px 6px;
+  border-radius:5px;
+  font-size:12px;
+  cursor:pointer;
+  z-index:20;
+}
+
+.option-box img {
+  position:relative;
+}
+
+#lightbox {
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.7);
+  display:none;
+  justify-content:center;
+  align-items:center;
+  z-index:99999;
+}
+
+#lightboxContent {
+  position:relative;
+  max-width:90%;
+  max-height:90%;
+}
+
+#lightboxContent img {
+  max-width:100%;
+  max-height:100%;
+  border-radius:10px;
+  box-shadow:0 0 20px rgba(0,0,0,0.6);
+}
+
+#lightboxClose {
+  position:absolute;
+  top:-20px;
+  right:-20px;
+  background:#fff;
+  color:#000;
+  width:32px;
+  height:32px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  font-size:20px;
+  box-shadow:0 0 8px rgba(0,0,0,0.4);
+}
+
+/* ===========================================
+   HEADER
+=========================================== */
+header{
+  position:sticky; 
+  top:0; 
+  z-index:2000;
+  padding:14px 16px;
+  background:rgba(0,0,0,0.6);
+  backdrop-filter:blur(5px);
+}
+
+.bar{
+  max-width:980px; 
+  margin:0 auto;
+  display:flex; 
+  align-items:center; 
+  justify-content:center;
+  position:relative;
+}
+
+.menu-btn{
+  position:absolute; 
+  left:0; 
+  top:50%; 
+  transform:translateY(-50%);
+  background:transparent; 
+  border:none; 
+  cursor:pointer; 
+  color:var(--icon);
+}
+.menu-btn svg{ width:30px; height:30px; stroke:currentColor; }
+
+.logo{ font-size:22px; font-weight:700; }
+
+.toggle{
+  position:absolute; 
+  right:0; 
+  top:50%; 
+  transform:translateY(-50%);
+  width:40px; 
+  height:40px;
+  background:transparent; 
+  border:none; 
+  cursor:pointer;
+  display:flex; 
+  align-items:center; 
+  justify-content:center;
+  color:var(--icon);
+}
+.toggle svg{ width:26px; height:26px; }
+
+/* ===========================================
+   CONTENT
+=========================================== */
+.wrap{
+  max-width:980px;
+  margin:0 auto;
+  padding:24px;
+}
+
+h1{ 
+  text-align:center; 
+  margin-bottom:28px;
+}
+
+/* ===========================================
+   ACCORDION
+=========================================== */
+.accordion{
+  background:var(--card);
+  border:1px solid #444;
+  margin-bottom:16px;
+  border-radius:10px;
+}
+
+.acc-header{
+  padding:12px 16px;
+  cursor:pointer;
+  font-size:18px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.acc-header:hover{ background:#3a3a3a; }
+
+.acc-body{
+  max-height:0;
+  overflow:hidden;
+  transition:max-height .25s ease;
+  background:#2d2d2d;
+}
+
+.acc-body-inner{
+  padding:16px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+}
+
+.option-box{
+  width:110px;
+  background:#444;
+  padding:8px;
+  border-radius:8px;
+  text-align:center;
+  cursor:pointer;
+  border:2px solid transparent;
+  transition:.2s;
+  font-size:14px;
+}
+
+.option-box img{
+  width:100%;
+  border-radius:6px;
+}
+
+.option-box:hover{
+  transform:scale(1.03);
+  border-color:#ffffff55;
+}
+
+.option-box.selected{
+  border-color:var(--accent);
+}
+
+/* ===========================================
+   ERGEBNIS-DESIGN
+=========================================== */
+#resultBox {
+  margin-top: 30px;
+  padding: 25px;
+  background: var(--card);
+  border-left: 5px solid var(--accent);
+  box-shadow: 0 4px 10px var(--shadow);
+  border-radius: 12px;
+  display: none;
+  animation: fadeIn .3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity:0; transform: translateY(8px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+
+.result-item {
+  padding: 12px 0;
+  border-bottom: 1px solid #555;
+  display: flex;
+  justify-content: space-between;
+}
+
+.result-topic { font-weight: 600; }
+.result-status { font-weight: 700; }
+.result-good { color: var(--good); }
+.result-bad { color: var(--bad); }
+
+.result-correct-answer {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 4px;
+  margin-bottom: 10px;
+}
+
+/* ===========================================
+   BUTTONS
+=========================================== */
+#checkBtn,
+#backBtn {
+  display:block;
+  width:40%;
+  margin:26px auto;
+  padding:10px;
+  background:var(--accent);
+  color:#fff;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  font-size:14px;
+  transform:scale(0.8);
+}
+
+#backBtn {
+  background:#666;
+  display:none;
+}
+
+/* ===========================================
+   SLIDE-IN MENU
+=========================================== */
+.overlay{
+  position:fixed;
+  inset:0;
+  opacity:0;
+  pointer-events:none;
+  background:rgba(0,0,0,.55);
+  transition:.25s;
+  z-index:900;
+}
+.overlay.open{
+  opacity:1;
+  pointer-events:auto;
+}
+
+.side-menu{
+  position:fixed;
+  top:0;
+  left:0;
+  height:100vh;
+  width:50vw;
+  max-width:520px;
+  min-width:280px;
+  background:#333;
+  color:#fff;
+  transform:translateX(-100%);
+  transition:.28s ease;
+  z-index:1000;
+  display:flex;
+  flex-direction:column;
+}
+.side-menu.open{ transform:translateX(0); }
+
+.menu-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px 16px;
+  border-bottom:1px solid #444;
+}
+.menu-close{
+  background:transparent;
+  border:1px solid #555;
+  padding:6px 10px;
+  border-radius:8px;
+  cursor:pointer;
+  color:#fff;
+}
+
+.menu-item, .menu-group{
+  padding:14px 16px;
+  border-bottom:1px solid #444;
+  cursor:pointer;
+}
+.menu-item:hover, .menu-group:hover{
+  background:#3a3a3a;
+}
+
+.caret{ transition:.25s; }
+
+.submenu{
+  max-height:0;
+  overflow:hidden;
+  background:#2c2c2c;
+  transition:max-height .28s ease;
+}
+.submenu.open{
+  max-height:300px;
+}
+
+.submenu-item{
+  padding:12px 32px;
+  border-bottom:1px solid #444;
+  cursor:pointer;
+}
+.submenu-item:hover{ background:#353535; }
+
+</style>
+</head>
+
+<body>
+
+<!-- LIGHTBOX -->
+<div id="lightbox">
+  <div id="lightboxContent">
+    <div id="lightboxClose">✖</div>
+    <img id="lightboxImg" src="">
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="bar">
+
+    <button class="menu-btn" id="menuButton">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <line x1="3" y1="12" x2="21" y2="12"/>
+        <line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+
+    <div class="logo">Rutenbau</div>
+
+    <button class="toggle" id="themeBtn">
+      <span id="themeIcon"></span>
+    </button>
+
+  </div>
+</header>
+
+<!-- CONTENT -->
+<main class="wrap">
+  
+<h1>Feederrute zum Fang von Rotaugen, Rotfeder, Brassen</h1>
+
+<div id="quizArea"></div>
+
+<button id="checkBtn">Prüfen</button>
+
+<button id="backBtn" onclick="go('rutenbau.html')">
+  Zurück zu Rutenbau
+</button>
+
+<div id="resultBox"></div>
+
+</main>
+
+<!-- OVERLAY -->
+<div id="overlay" class="overlay"></div>
+
+<!-- MENU -->
+<nav id="sideMenu" class="side-menu">
+  <div class="menu-header">
+    <strong>Menü</strong>
+    <button id="menuClose" class="menu-close">✕</button>
+  </div>
+
+  <ul class="menu-list">
+
+    <li class="menu-item" onclick="go('index.html')">🏠 Startseite</li>
+
+    <li class="menu-group" id="lernenToggle">
+      <span>📘 Lernen</span>
+      <span class="caret">▶</span>
+    </li>
+
+    <div class="submenu" id="lernenMenu">
+      <div class="submenu-item" onclick="go('fischkunde.html')">Fischkunde</div>
+      <div class="submenu-item" onclick="go('pruefungsfragen.html')">Prüfungsfragen</div>
+      <div class="submenu-item" onclick="go('rutenbau.html')">Rutenbau</div>
+    </div>
+
+    <li class="menu-item" onclick="go('schonzeiten.html')">🗓️ Schonzeiten</li>
+
+  </ul>
+</nav>
+
+<script>
+function go(u){ window.location.href = u; }
+
+/* ===============================
+   QUIZ-DATEN
+=============================== */
+const quizData = {
+  "Rute": [
+    { img:'<img src="img/rutenbau/rute1.png">', text:"Beringte Stipprute; Länge: 4,00 - 7,00 m; Wurfgewicht: bis 20g", correct:false },
+    { img:'<img src="img/rutenbau/rute2.png">', text:"Feederrute; Länge: 2,70 - 3,00 m; Wurfgewicht: bis 80g", correct:true },
+    { img:'<img src="img/rutenbau/rute3.png">', text:"Karpfenrute; Länge: 3,30 - 3,90 m; Wurfgewicht: 20-70g", correct:false },
+    { img:'<img src="img/rutenbau/rute4.png">', text:"Aalrute; Länge: 2,00 - 2,70 m; Wurfgewicht: 40-80g", correct:false },
+    { img:'<img src="img/rutenbau/rute5.png">', text:"Spinnrute „Hecht“; Länge: 2,40 - 3,00 m; Wurfgewicht: 40-80g", correct:false },
+    { img:'<img src="img/rutenbau/rute6.png">', text:"Spinnrute „Barsch“; Länge: bis 2,10 m; Wurfgewicht: 10-30g", correct:false },
+    { img:'<img src="img/rutenbau/rute7.png">', text:"Fliegenrute; Länge: 2,40 - 2,70 m; Klasse 5-6", correct:false },
+    { img:'<img src="img/rutenbau/rute8.png">', text:"Pilkrute; Länge: 2,00 - 3,00 m; Wurfgewicht: 100-250g", correct:false },
+    { img:'<img src="img/rutenbau/rute9.png">', text:"Brandungsrute; Länge: 3,60 - 5,00 m; Wurfgewicht: 100-250g", correct:false },
+    { img:'<img src="img/rutenbau/entfällt.png">', text:"Entfällt", correct:false }
+  ],
+  "Rolle": [
+    { img:'<img src="img/rutenbau/kleine.png">', text:"Kleine Stationärrolle", correct:true},
+    { img:'<img src="img/rutenbau/mittlere.png">', text:"Mittlere Stationärrolle", correct:false},
+    { img:'<img src="img/rutenbau/große.png">', text:"Große Stationärrolle", correct:false },
+    { img:'<img src="img/rutenbau/fliegen.png">', text:"Fliegenrolle", correct:false },
+    { img:'<img src="img/rutenbau/multi.png">', text:"Schwere Multirolle", correct:false },
+    { img:'<img src="img/rutenbau/entfällt.png">', text:"Entfällt", correct:false }
+  ],
+  "Schnur": [
+    { img:'<img src="img//rutenbau/mono2-6.png">', text:"Monofile Schnur; 2-6 kg", correct:true },
+    { img:'<img src="img//rutenbau/mono6-12.png">', text:"Monofile Schnur; 6-12 kg", correct:false },
+    { img:'<img src="img//rutenbau/mono12-17.png">', text:"Monofile Schnur; 12-17 kg", correct:false },
+    { img:'<img src="img//rutenbau/mono19-21.png">', text:"Monofile Schnur; 19-21 kg", correct:false },
+    { img:'<img src="img//rutenbau/geflochten12-17.png">', text:"Geflochtene Schnur; 12-17 kg", correct:false },
+    { img:'<img src="img//rutenbau/fliegen5-6flo.png">', text:"Fliegenschnur; Klasse 5-6 Floating", correct:false },
+    { img:'<img src="img//rutenbau/fliegen5-6sin.png">', text:"Fliegenschnur; Klasse 5-6 Sinking", correct:false },
+    { img:'<img src="img//rutenbau/schlagschnur.png">', text:"Schlagschnur; 15-20 kg", correct:false },
+    { img:'<img src="img//rutenbau/entfällt.png">', text:"Entfällt", correct:false }
+  ],
+  "Bissanzeiger": [
+    { img:'<img src="img/rutenbau/pose2g.png">', text:"Feststellpose 2 Gramm ", correct:false },
+    { img:'<img src="img/rutenbau/pose3g.png">', text:"Laufpose mit Stopper 3 Gramm", correct:false },
+    { img:'<img src="img/rutenbau/feederspitze.png">', text:"Feederspitze", correct:true },
+    { img:'<img src="img/rutenbau/entfällt.png">', text:"Entfällt", correct:false }
+  ],
+  "Beschwerung": [
+    { img:'<img src="img/rutenbau/bleischrot.png">', text:"Bleischrot", correct:false },
+    { img:'<img src="img/rutenbau/futterkorb.png">', text:"Futterkorb", correct:true },
+    { img:'<img src="img/rutenbau/grundblei.png">', text:"Grundblei", correct:false },
+    { img:'<img src="img/rutenbau/brandungsblei.png">', text:"Brandungsblei", correct:false },
+    { img:'<img src="img/rutenbau/entfällt.png">', text:"Entfällt", correct:false }
+  ],
+  "Vorfach": [
+    { img:'<img src="img/rutenbau/fliegenvor.png">', text:"Fliegenvorfach", correct:false },
+    { img:'<img src="img/rutenbau/stahlvor.png">', text:"Stahlvorfach", correct:false },
+    { img:'<img src="img/rutenbau/brandungsvor.png">', text:"Brandungsvorfach", correct:false },
+    { img:'<img src="img/rutenbau/entfällt.png">', text:"Entfällt / Vorfach am Vorhaken", correct:true }
+  ],
+  "Wirbel": [
+    { img:'<img src="img/rutenbau/kleiner-mit-wirbel.png">', text:"Kleiner / mittlerer Wirbel", correct:true },
+    { img:'<img src="img/rutenbau/meereswirbel.png">', text:"Meereswirbel", correct:false },
+    { img:'<img src="img/rutenbau/entfällt.png">', text:"Entfällt", correct:false }
+  ],
+  "Haken": [
+    { img:'<img src="img/rutenbau/10kleiner.png">', text:"Vorfachhaken; 10 und kleiner", correct:true },
+    { img:'<img src="img/rutenbau/6größer.png">', text:"Vorfachhaken; 6 und größer", correct:false },
+    { img:'<img src="img/rutenbau/jig.png">', text:"Jighaken", correct:false },
+    { img:'<img src="img/rutenbau/entfällt.png">', text:"Entfällt", correct:false }
+  ],
+  "Köder": [
+    { img:'<img src="img/rutenbau/spinner.png">', text:"Spinner", correct:false },
+    { img:'<img src="img/rutenbau/blinker.png">', text:"Blinker", correct:false },
+    { img:'<img src="img/rutenbau/wobbler.png">', text:"Wobbler", correct:false },
+    { img:'<img src="img/rutenbau/twister.png">', text:"Twister", correct:false },
+    { img:'<img src="img/rutenbau/pilker.png">', text:"Pilker", correct:false },
+    { img:'<img src="img/rutenbau/trockenfliege.png">', text:"Trockenfliege", correct:false },
+    { img:'<img src="img/rutenbau/nassfliege.png">', text:"Nassfliege", correct:false },
+    { img:'<img src="img/rutenbau/teig.png">', text:"Teig", correct:true },
+    { img:'<img src="img/rutenbau/made.png">', text:"Made", correct:true },
+    { img:'<img src="img/rutenbau/wurm.png">', text:"Wurm", correct:true },
+    { img:'<img src="img/rutenbau/kartoffel.png">', text:"Kartoffel", correct:false },
+    { img:'<img src="img/rutenbau/köfi.png">', text:"Toter Köderfisch", correct:false },
+    { img:'<img src="img/rutenbau/wattwurm.png">', text:"Wattwurm", correct:false },
+    { img:'<img src="img/rutenbau/entfällt.png">', text:"Entfällt", correct:false }
+  ],
+  "Landehilfe": [
+    { img:'<img src="img/rutenbau/unterarmkescher.png">', text:"Unterfangkescher", correct:true },
+    { img:'<img src="img/rutenbau/watkescher.png">', text:"Watkescher", correct:false },
+    { img:'<img src="img/rutenbau/gaff.png">', text:"Gaff", correct:false },
+    { img:'<img src="img/rutenbau/entfällt.png">', text:"Entfällt", correct:false }
+  ],
+  "Messen": [
+    { img:'<img src="img/rutenbau/messen.png">', text:"div. Längenmessgerät", correct:true },
+    { img:'<img src="img/rutenbau/entfällt.png">', text:"Entfällt", correct:false }
+  ],
+  "Betäuben": [
+    { img:'<img src="img/rutenbau/schlagholz.png">', text:"Schlagholz", correct:true },
+    { img:'<img src="img/rutenbau/entfällt.png">', text:"Entfällt", correct:false }
+  ],
+  "Töten": [
+    { img:'<img src="img/rutenbau/messer.png">', text:"Messer", correct:true },
+    { img:'<img src="img/rutenbau/entfällt.png">', text:"Entfällt", correct:false }
+  ],
+  "Rachensperre": [
+    { img:'<img src="img/rutenbau/rachensperre.png">', text:"Rachensperre", correct:false },
+    { img:'<img src="img/rutenbau/entfällt.png">', text:"Entfällt", correct:true }
+  ],
+  "Haken entfernen": [
+    { img:'<img src="img/rutenbau/großerhakenlöser.png">', text:"Große Hakenlösezange", correct:false },
+    { img:'<img src="img/rutenbau/kleinerhakenlöser.png">', text:"Kleine Hakenlösezange", correct:true },
+    { img:'<img src="img/rutenbau/kleinerlöser.png">', text:"Kleiner Hakenlöser", correct:true },
+    { img:'<img src="img/rutenbau/entfällt.png">', text:"Entfällt", correct:false }
+  ]
+};
+
+/* ===============================
+   QUIZ GENERIEREN
+=============================== */
+const quizArea = document.getElementById("quizArea");
+
+Object.keys(quizData).forEach(topic => {
+
+  let optionsHTML = "";
+
+  quizData[topic].forEach(opt => {
+    optionsHTML += `
+<div class="option-box" data-group="${topic}" data-correct="${opt.correct}">
+  ${opt.img}
+  <div>${opt.text}</div>
+</div>`;
+  });
+
+  quizArea.innerHTML += `
+<div class="accordion">
+  <div class="acc-header">${topic} <span>▼</span></div>
+  <div class="acc-body">
+    <div class="acc-body-inner">${optionsHTML}</div>
+  </div>
+</div>`;
+});
+
+/* Accordion öffnen */
+document.querySelectorAll(".accordion").forEach(acc => {
+  acc.querySelector(".acc-header").onclick = () => {
+    const body = acc.querySelector(".acc-body");
+    body.style.maxHeight = body.style.maxHeight ? null : body.scrollHeight + "px";
+  };
+});
+
+/* ===============================
+   AUSWAHL
+=============================== */
+let selections = {};
+
+document.addEventListener("click", (e) => {
+  if(!e.target.closest(".option-box")) return;
+
+  const box = e.target.closest(".option-box");
+  const group = box.dataset.group;
+
+  document.querySelectorAll(`.option-box[data-group='${group}']`)
+    .forEach(b => b.classList.remove("selected"));
+
+  box.classList.add("selected");
+  selections[group] = box.dataset.correct;
+});
+
+/* ===============================
+   ERGEBNIS
+=============================== */
+document.getElementById("checkBtn").onclick = () => {
+
+  const resultBox = document.getElementById("resultBox");
+  resultBox.style.display = "block";
+  resultBox.innerHTML = "<h2>Ergebnis</h2>";
+
+  Object.keys(quizData).forEach(topic => {
+
+    const selected = selections[topic];
+    const correctOption = quizData[topic].find(o => o.correct === true);
+    const correctText = correctOption ? correctOption.text : "Keine Angabe";
+
+    if(!selected){
+      resultBox.innerHTML += `
+      <div class="result-item">
+        <span class="result-topic">${topic}</span>
+        <span class="result-status result-bad">✖ Keine Auswahl</span>
+      </div>
+      <div class="result-correct-answer">Richtige Antwort: <b>${correctText}</b></div>
+      `;
+      return;
+    }
+
+    if(selected === "true"){
+      resultBox.innerHTML += `
+      <div class="result-item">
+        <span class="result-topic">${topic}</span>
+        <span class="result-status result-good">✔ Richtig</span>
+      </div>
+      `;
+      return;
+    }
+
+    resultBox.innerHTML += `
+    <div class="result-item">
+      <span class="result-topic">${topic}</span>
+      <span class="result-status result-bad">✖ Falsch</span>
+    </div>
+    <div class="result-correct-answer">Richtige Antwort: <b>${correctText}</b></div>
+    `;
+  });
+
+  /* Button ans Ende der Liste setzen */
+  resultBox.appendChild(document.getElementById("backBtn"));
+  document.getElementById("backBtn").style.display = "block";
+};
+
+/* ===============================
+   MENÜ
+=============================== */
+const menuBtn = document.getElementById("menuButton");
+const menuClose = document.getElementById("menuClose");
+const sideMenu = document.getElementById("sideMenu");
+const overlay = document.getElementById("overlay");
+
+menuBtn.onclick = () => { sideMenu.classList.add("open"); overlay.classList.add("open"); };
+menuClose.onclick = () => { sideMenu.classList.remove("open"); overlay.classList.remove("open"); };
+overlay.onclick   = () => { sideMenu.classList.remove("open"); overlay.classList.remove("open"); };
+
+const lernenToggle = document.getElementById("lernenToggle");
+const lernenMenu = document.getElementById("lernenMenu");
+
+lernenToggle.onclick = () => {
+  lernenMenu.classList.toggle("open");
+  lernenToggle.querySelector(".caret").style.transform =
+    lernenMenu.classList.contains("open") ? "rotate(90deg)" : "rotate(0deg)";
+};
+
+/* ===============================
+   THEME SWITCHER
+=============================== */
+(function(){
+  const saved = localStorage.getItem("theme") || "dark";
+  document.documentElement.classList.add(saved);
+  setIcon(saved);
+
+  document.getElementById("themeBtn").onclick = () => {
+    const now = document.documentElement.classList.contains("dark") ? "light" : "dark";
+    document.documentElement.classList.remove("dark","light");
+    document.documentElement.classList.add(now);
+    localStorage.setItem("theme", now);
+    setIcon(now);
+  };
+
+  function setIcon(mode){
+    document.getElementById("themeIcon").innerHTML =
+      mode === "dark"
+      ? `<svg viewBox="0 0 24 24" fill="none" stroke="var(--icon)" stroke-width="2">
+           <circle cx="12" cy="12" r="4"/>
+           <path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/>
+         </svg>`
+      : `<svg viewBox="0 0 24 24" fill="var(--icon)">
+           <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
+         </svg>`;
+  }
+})();
+
+/* ===============================
+   HEADER-ABSTAND
+=============================== */
+window.addEventListener("load", () => {
+  const headerHeight = document.querySelector("header").offsetHeight;
+  document.querySelector("main.wrap").style.marginTop = (headerHeight + 15) + "px";
+});
+
+/* ===============================
+   ZOOM-FUNKTION
+=============================== */
+document.querySelectorAll(".option-box").forEach(box => {
+  
+  const imgEl = box.querySelector("img");
+
+  const zoomBtn = document.createElement("div");
+  zoomBtn.classList.add("zoom-icon");
+  zoomBtn.innerHTML = "🔍";
+
+  box.style.position = "relative";
+  box.appendChild(zoomBtn);
+
+  zoomBtn.onclick = (ev) => {
+    ev.stopPropagation();
+    openLightbox(imgEl.src);
+  };
+
+});
+
+function openLightbox(src){
+  document.getElementById("lightboxImg").src = src;
+  document.getElementById("lightbox").style.display = "flex";
+}
+
+document.getElementById("lightboxClose").onclick = () => {
+  document.getElementById("lightbox").style.display = "none";
+};
+
+document.getElementById("lightbox").onclick = (e) => {
+  if (e.target === e.currentTarget){
+    document.getElementById("lightbox").style.display = "none";
+  }
+};
+
+</script>
+
+</body>
+</html>
