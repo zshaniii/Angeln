@@ -361,13 +361,21 @@ header{
     </div>
 
     <li class="menu-item" onclick="go('schonzeiten.html')">🗓️ Schonzeiten</li>
+    <li class="menu-item" onclick="go('account.html')">👤 Mein Konto</li>
 
   </ul>
 </nav>
 
 <!-- ===================== SCRIPT ===================== -->
+<script src="auth.js"></script>
 <script>
 function go(u){ window.location.href = u; }
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  document.querySelectorAll('.btn-card.role-pro').forEach(el=>{
+    el.style.display = canAccessProbePruefung() ? 'grid' : 'none';
+  });
+});
 
 /* Menü */
 const menuBtn = document.getElementById("menuButton");
