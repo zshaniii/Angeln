@@ -220,10 +220,9 @@
       </div>
 
       <li class="menu-item" onclick="go('schonzeiten.html')">🗓️ Schonzeiten</li>
+      <li class="menu-item" onclick="go('account.html')">👤 Mein Konto</li>
     </ul>
   </nav>
-
-  <!-- ===== HEADER ===== -->
   <header>
     <div class="bar">
       <button class="menu-btn" id="menuButton" aria-label="Menü öffnen">
@@ -254,10 +253,11 @@
         <button id="btnWeiter" disabled>Weiter</button>
       </div>
 
+      <div id="quizInfo" style="font-size:14px; color:#bbb; margin-top:14px;"></div>
       <p id="result"></p>
     </section>
   </main>
-
+  <script src="auth.js"></script>
   <script>
   function go(u){ window.location.href = u; }
 
@@ -2001,7 +2001,42 @@
   function neuesDeck(){ deck = shuffle([...Array(fragen.length).keys()]); }
 
   /* ===== Neue Frage (mit zufälligen Antworten!) ===== */
+  function updateQuizInfo(){
+    const info = document.getElementById("quizInfo");
+    if(!info) return;
+    if(isPro()){
+      info.textContent = "Pro-Nutzer: unbegrenzte Fragen.";
+      return;
+    }
+    const remaining = getPruefungsfragenRemaining();
+    info.textContent = `Verbleibende Fragen heute: ${remaining}`;
+  }
+
+  function disableQuiz(message){
+    const frageEl = document.getElementById("frageText");
+    const result = document.getElementById("result");
+    const btns = [...document.querySelectorAll("#answers .choice")];
+
+    frageEl.textContent = message;
+    result.textContent = "";
+
+    btns.forEach(b=>{
+      b.textContent = "";
+      b.className = "choice";
+      b.disabled = true;
+    });
+
+    document.getElementById("btnPruefen").disabled = true;
+    document.getElementById("btnWeiter").disabled = true;
+  }
+
   function neueFrage(){
+    if(!canAccessPruefungsfragen()){
+      updateQuizInfo();
+      disableQuiz("Du hast dein Tageslimit erreicht. Bitte melde dich an oder versuche es morgen erneut.");
+      return;
+    }
+
     if(deck.length === 0) neuesDeck();
     const idx = deck.pop();
     const f = fragen[idx];
@@ -2077,6 +2112,9 @@
       r.style.color = "lightgreen";
     }
 
+    registerDailyUsage('pruefungsfragen');
+    updateQuizInfo();
+
     document.getElementById("btnPruefen").disabled = true;
     document.getElementById("btnWeiter").disabled = false;
   }
@@ -2085,7 +2123,12 @@
   document.getElementById("btnWeiter").onclick  = neueFrage;
 
   neuesDeck();
-  neueFrage();
+  if(canAccessPruefungsfragen()){
+    neueFrage();
+  } else {
+    updateQuizInfo();
+    disableQuiz("Du hast dein Tageslimit erreicht. Bitte melde dich an oder versuche es morgen erneut.");
+  }
   </script>
 
   </body>
