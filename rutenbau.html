@@ -253,64 +253,65 @@ header{
 </header>
 
 <main class="wrap">
+  <div id="rutenbauInfo" style="font-size:14px; color:var(--muted); margin-bottom:18px;"></div>
 
   <div class="menu-buttons">
 
-    <div class="btn-card" onclick="go('rute1.html')">
+    <div class="btn-card" onclick="openRoute('rute1.html')">
       <div class="icon">🎣</div>
       <div class="btn-title">Beringte leichte Rute zum Fang von Rotaugen, Rotfeder, Brassen</div>
       <span class="spacer"></span>
     </div>
 
-    <div class="btn-card" onclick="go('rute2.html')">
+    <div class="btn-card" onclick="openRoute('rute2.html')">
       <div class="icon">🎣</div>
       <div class="btn-title">Feederrute zum Fang von Rotaugen, Rotfeder, Brassen</div>
       <span class="spacer"></span>
     </div>
 
-    <div class="btn-card" onclick="go('rute3.html')">
+    <div class="btn-card" onclick="openRoute('rute3.html')">
       <div class="icon">🎣</div>
       <div class="btn-title">Rute zum Fang von Karpfen</div>
       <span class="spacer"></span>
     </div>
 
-    <div class="btn-card" onclick="go('rute4.html')">
+    <div class="btn-card" onclick="openRoute('rute4.html')">
       <div class="icon">🎣</div>
       <div class="btn-title">Grundrute zum Fang von Aalen</div>
       <span class="spacer"></span>
     </div>
 
-    <div class="btn-card" onclick="go('rute5.html')">
+    <div class="btn-card" onclick="openRoute('rute5.html')">
       <div class="icon">🎣</div>
       <div class="btn-title">Spinnrute zum Fang von Hechten</div>
       <span class="spacer"></span>
     </div>
 
-    <div class="btn-card" onclick="go('rute6.html')">
+    <div class="btn-card" onclick="openRoute('rute6.html')">
       <div class="icon">🎣</div>
       <div class="btn-title">Spinnrute zum Fang von Barschen</div>
       <span class="spacer"></span>
     </div>
 
-    <div class="btn-card" onclick="go('rute7.html')">
+    <div class="btn-card" onclick="openRoute('rute7.html')">
       <div class="icon">🎣</div>
       <div class="btn-title">Fliegenrute zum Fang von Forellen (Trockenfischen)</div>
       <span class="spacer"></span>
     </div>
 
-    <div class="btn-card" onclick="go('rute8.html')">
+    <div class="btn-card" onclick="openRoute('rute8.html')">
       <div class="icon">🎣</div>
       <div class="btn-title">Fliegenrute zum Fang von Forellen (Nassfischen)</div>
       <span class="spacer"></span>
     </div>
 
-    <div class="btn-card" onclick="go('rute9.html')">
+    <div class="btn-card" onclick="openRoute('rute9.html')">
       <div class="icon">🎣</div>
       <div class="btn-title">Rute zum Fang von Dorschen</div>
       <span class="spacer"></span>
     </div>
 
-    <div class="btn-card" onclick="go('rute10.html')">
+    <div class="btn-card" onclick="openRoute('rute10.html')">
       <div class="icon">🎣</div>
       <div class="btn-title">Brandungsrute zum Fang von Plattfischen</div>
       <span class="spacer"></span>
@@ -348,9 +349,11 @@ header{
     </div>
 
     <li class="menu-item" onclick="go('schonzeiten.html')">🗓️ Schonzeiten</li>
+    <li class="menu-item" onclick="go('account.html')">👤 Mein Konto</li>
 
   </ul>
 </nav>
+<script src="auth.js"></script>
 
 <script>
 function go(u){ window.location.href = u; }
@@ -398,6 +401,33 @@ lernenToggle.onclick = () => {
       : `<svg viewBox="0 0 24 24" fill="var(--icon)"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>`;
   }
 })();
+
+function updateRutenbauInfo(){
+  const info = document.getElementById('rutenbauInfo');
+  if(!info) return;
+  if(isPro()){
+    info.textContent = 'Pro-Nutzer: unbegrenzte Routen.';
+    return;
+  }
+  const remaining = getRutenbauRoutesRemaining();
+  const label = isLoggedIn() ? 'Verbleibende Routen heute' : 'Verbleibende Routen heute (Gast)';
+  info.textContent = `${label}: ${remaining}`;
+}
+
+function openRoute(route){
+  if(!canAccessRutenbauRoute()){
+    if(isLoggedIn()){
+      alert('Du hast das Tageslimit von 4 Routen erreicht. Bitte versuche es morgen erneut.');
+    } else {
+      alert('Gastmodus: Nur 1 Route pro Tag. Melde dich an, um 4 Routen pro Tag freizuschalten.');
+    }
+    return;
+  }
+  registerRutenbauRoute();
+  go(route);
+}
+
+updateRutenbauInfo();
 </script>
 
 </body>
