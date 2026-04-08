@@ -1,6 +1,6 @@
 const AUTH_USERS_KEY = 'anglerAppUsers';
 const AUTH_CURRENT_KEY = 'anglerAppCurrent';
-const PRO_CODES = ['FREIPRO', 'PRO2026', 'ANGELPRO'];
+const PRO_CODES = ['ShanePro', 'ADMIN'];
 
 function getUsers(){
   try{
