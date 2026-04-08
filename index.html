@@ -53,13 +53,13 @@
       height:34px;
     }
 
-    /* LOGO */
-    .LOGO{
+    /* Logo */
+    .logo{
       display:flex; 
       align-items:center; 
       justify-content:center; 
     }
-    .LOGO img{
+    .logo img{
       height:58px;
     }
 
@@ -85,12 +85,46 @@
       display:block;
     }
 
+    .header-action{
+      position:absolute;
+      left:0;
+      top:50%;
+      transform:translateY(-50%);
+      background:transparent;
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:12px;
+      color:var(--text);
+      padding:8px 14px;
+      cursor:pointer;
+      font-size:14px;
+      font-weight:600;
+      transition:border-color .2s,color .2s,background .2s;
+    }
+    .header-action:hover{
+      border-color:var(--accent);
+      color:var(--accent);
+      background:rgba(255,255,255,.05);
+    }
+
     /* Layout */
     .wrap{
       max-width:980px; 
       margin:0 auto; 
       padding:24px; 
       text-align:center;
+    }
+    .welcome-banner{
+      display:none;
+      max-width:980px;
+      margin:18px auto 0;
+      padding:14px 18px;
+      border-radius:14px;
+      background:rgba(255,255,255,.08);
+      color:var(--text);
+      text-align:center;
+      border:1px solid rgba(255,255,255,.12);
+      font-size:16px;
+      backdrop-filter:blur(6px);
     }
 
     .menu-buttons{
@@ -165,10 +199,10 @@ html.dark .btn-card{ background:#2f2f2f; }
   <header>
     <div class="bar">
 
-      
+      <button class="header-action" id="authHeaderBtn" onclick="handleAuthHeaderClick()">Anmelden</button>
 
-      <div class="LOGO">
-        <img src="img/LOGO.png" alt="LOGO">
+      <div class="logo">
+        <img src="img/Logo.png" alt="Logo">
       </div>
 
       <button class="toggle" id="themeBtn">
@@ -180,13 +214,12 @@ html.dark .btn-card{ background:#2f2f2f; }
 
   <!-- CONTENT -->
   <main class="wrap">
-
-    
+    <div class="welcome-banner" id="welcomeBanner"></div>
 
 <div class="menu-buttons">
 
   <!-- FISCHKUNDE -->
-  <div class="btn-card" onclick="go('lernen.html')">
+  <div class="btn-card" onclick="go('Lernen.html')">
     
 <svg class="icon" viewBox="0 0 24 24" fill="none"
      stroke="var(--text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -203,7 +236,7 @@ html.dark .btn-card{ background:#2f2f2f; }
 </svg>
 
 
-    <div class="btn-title">lernen</div>
+    <div class="btn-title">Lernen</div>
 
     <span class="spacer" aria-hidden="true"></span>
   </div>
@@ -223,21 +256,79 @@ html.dark .btn-card{ background:#2f2f2f; }
     <span class="spacer" aria-hidden="true"></span>
   </div>
 
+  
+
+  <div class="btn-card role-pro" onclick="go('rutenbau.html')">
+    <svg class="icon" viewBox="0 0 24 24" fill="none"
+         stroke="var(--text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M4 5h16" />
+      <path d="M4 12h16" />
+      <path d="M4 19h16" />
+    </svg>
+    <div class="btn-title">Pro Rutenbau</div>
+    <span class="spacer" aria-hidden="true"></span>
+  </div>
+
+  <div class="btn-card role-user" onclick="go('account.html')">
+    <svg class="icon" viewBox="0 0 24 24" fill="none"
+         stroke="var(--text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="8" r="3" />
+      <path d="M6 20c0-3.3 2.7-6 6-6s6 2.7 6 6" />
+    </svg>
+    <div class="btn-title">Mein Konto</div>
+    <span class="spacer" aria-hidden="true"></span>
+  </div>
+
 </div>
 
 
 
   </main>
-
+  <script src="auth.js"></script>
   <script>
     /* NAVIGATION */
     function go(u){ window.location.href = u }
+    function logoutAndReload(){ logout(); window.location.reload(); }
+    function handleAuthHeaderClick(){
+      if(isLoggedIn()) return go('account.html');
+      go('login.html');
+    }
+    function renderAuthUI(){
+      const authInfo = document.getElementById('authInfo');
+      const authBtn = document.getElementById('authHeaderBtn');
+      const loggedIn = isLoggedIn();
+      const welcomeBanner = document.getElementById('welcomeBanner');
+      if(authInfo){
+        authInfo.innerHTML = '';
+      }
+      if(welcomeBanner){
+        if(loggedIn){
+          welcomeBanner.style.display = 'block';
+          welcomeBanner.textContent = `Willkommen, ${getCurrentUser()}!`;
+        } else {
+          welcomeBanner.style.display = 'none';
+          welcomeBanner.textContent = '';
+        }
+      }
+      if(authBtn){
+        authBtn.textContent = loggedIn ? 'Mein Konto' : 'Anmelden';
+      }
+      document.querySelectorAll('.btn-card.role-user').forEach(el=>{
+        el.style.display = (getUserRole() === 'user' || getUserRole() === 'pro') ? 'grid' : 'none';
+      });
+      document.querySelectorAll('.btn-card.role-pro').forEach(el=>{
+        el.style.display = getUserRole() === 'pro' ? 'grid' : 'none';
+      });
+    }
+
+    /* THEME SWITCH */
 
     /* THEME SWITCH */
     (function(){
       const saved = localStorage.getItem('theme') || 'dark';
       document.documentElement.classList.add(saved);
       setIcon(saved);
+      renderAuthUI();
 
       document.getElementById('themeBtn').onclick = ()=>{
         const now = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
@@ -245,6 +336,7 @@ html.dark .btn-card{ background:#2f2f2f; }
         document.documentElement.classList.add(now);
         localStorage.setItem('theme', now);
         setIcon(now);
+        renderAuthUI();
       };
 
       function setIcon(mode){
