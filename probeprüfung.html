@@ -187,10 +187,17 @@ button{
       <div class="submenu-item">Prüfungsfragen</div>
       <div class="submenu-item">Rutenbau</div>
     </div>
+    <li class="menu-item" onclick="go('account.html')">👤 Mein Konto</li>
   </ul>
 </nav>
 
+<script src="auth.js"></script>
 <script>
+if(!canAccessProbePruefung()){
+  alert('Nur Pro-Benutzer können die Probeprüfung starten.');
+  window.location.href = 'index.html';
+}
+
 function go(u){ location.href=u }
 
 menuButton.onclick=()=>{sideMenu.classList.add("open");overlay.classList.add("open")}
@@ -3279,6 +3286,5 @@ renderFragen()
 
 </body>
 </html>
-
 
 
