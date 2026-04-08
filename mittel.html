@@ -203,8 +203,16 @@
       </div>
 
       <li class="menu-item" onclick="go('schonzeiten.html')">🗓️ Schonzeiten &amp; Mindestmaß</li>
+      <li class="menu-item" onclick="go('account.html')">👤 Mein Konto</li>
     </ul>
   </nav>
+<script src="auth.js"></script>
+<script>
+  if(!canAccessFischkundeLevel('mittel')){
+    alert('Mittel ist nur für angemeldete Nutzer verfügbar. Bitte melde dich an.');
+    window.location.href = 'fischkunde.html';
+  }
+</script>
 
   <!-- ============================= MENU + THEME SCRIPT ============================= -->
   <script>
