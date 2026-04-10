@@ -1,169 +1,82 @@
-const AUTH_USERS_KEY = 'anglerAppUsers';
-const AUTH_CURRENT_KEY = 'anglerAppCurrent';
-const PRO_CODES = ['ShanePro', 'ADMIN'];
+// =============================
+// CONFIG
+// =============================
+const API_URL = "https://DEIN-SERVICE.onrender.com"; 
+const TOKEN_KEY = "angler_auth_token";
 
-function getUsers(){
-  try{
-    return JSON.parse(localStorage.getItem(AUTH_USERS_KEY)) || {};
-  }catch(e){
-    return {};
-  }
+// =============================
+// TOKEN HANDLING
+// =============================
+function getToken() {
+  return localStorage.getItem(TOKEN_KEY);
 }
 
-function saveUsers(users){
-  localStorage.setItem(AUTH_USERS_KEY, JSON.stringify(users));
+function setToken(token) {
+  localStorage.setItem(TOKEN_KEY, token);
 }
 
-function getCurrentUser(){
-  return localStorage.getItem(AUTH_CURRENT_KEY);
+function clearToken() {
+  localStorage.removeItem(TOKEN_KEY);
 }
 
-function setCurrentUser(username){
-  localStorage.setItem(AUTH_CURRENT_KEY, username);
+// =============================
+// AUTH STATUS
+// =============================
+function isLoggedIn() {
+  return !!getToken();
 }
 
-function clearCurrentUser(){
-  localStorage.removeItem(AUTH_CURRENT_KEY);
-}
+// =============================
+// LOGIN / LOGOUT
+// =============================
+async function loginUser(username, password) {
+  const res = await fetch(`${API_URL}/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password })
+  });
 
-function getCurrentUserData(){
-  const username = getCurrentUser();
-  if(!username) return null;
-  return getUsers()[username] || null;
-}
+  if (!res.ok) return false;
 
-function isLoggedIn(){
-  return !!getCurrentUserData();
-}
-
-function getUserRole(){
-  const user = getCurrentUserData();
-  return user ? user.role : 'guest';
-}
-
-function isPro(){
-  return getUserRole() === 'pro';
-}
-
-function getTodayKey(name){
-  const day = new Date().toISOString().slice(0,10);
-  return `${AUTH_USERS_KEY}:${name}:${day}`;
-}
-
-function getDailyUsage(name){
-  try{
-    return Number(localStorage.getItem(getTodayKey(name))) || 0;
-  }catch(e){
-    return 0;
-  }
-}
-
-function registerDailyUsage(name, amount = 1){
-  const key = getTodayKey(name);
-  const current = getDailyUsage(name);
-  localStorage.setItem(key, String(current + amount));
-}
-
-function canAccessPruefungsfragen(){
-  if(isPro()) return true;
-  if(isLoggedIn()) return getDailyUsage('pruefungsfragen') < 100;
-  return getDailyUsage('pruefungsfragen') < 30;
-}
-
-function getPruefungsfragenRemaining(){
-  if(isPro()) return Infinity;
-  if(isLoggedIn()) return Math.max(0, 100 - getDailyUsage('pruefungsfragen'));
-  return Math.max(0, 30 - getDailyUsage('pruefungsfragen'));
-}
-
-function canAccessFischkundeLevel(level){
-  if(isPro() || isLoggedIn()) return true;
-  return level.toLowerCase() === 'leicht';
-}
-
-function canAccessRutenbauRoute(){
-  if(isPro()) return true;
-  if(isLoggedIn()) return getDailyUsage('rutenbauRoute') < 4;
-  return getDailyUsage('rutenbauRoute') < 1;
-}
-
-function getRutenbauRoutesRemaining(){
-  if(isPro()) return Infinity;
-  if(isLoggedIn()) return Math.max(0, 4 - getDailyUsage('rutenbauRoute'));
-  return Math.max(0, 1 - getDailyUsage('rutenbauRoute'));
-}
-
-function registerRutenbauRoute(){
-  if(isPro()) return;
-  registerDailyUsage('rutenbauRoute');
-}
-
-function canAccessProbePruefung(){
-  return isPro();
-}
-
-function getCurrentUserProfile(){
-  const user = getCurrentUserData();
-  return user ? user.profile || {} : {};
-}
-
-function saveCurrentUserProfile(profileUpdates){
-  const username = getCurrentUser();
-  if(!username) return false;
-  const users = getUsers();
-  const user = users[username];
-  if(!user) return false;
-  user.profile = Object.assign(user.profile || {}, profileUpdates);
-  users[username] = user;
-  saveUsers(users);
+  const data = await res.json();
+  setToken(data.token);
   return true;
 }
 
-function saveCurrentUserAvatar(dataUrl){
-  return saveCurrentUserProfile({ avatar: dataUrl });
+function logout() {
+  clearToken();
+  window.location.href = "login.html";
 }
 
-function registerUser(username, password){
-  const users = getUsers();
-  if(!username || !password || users[username]) return false;
-  users[username] = { password, role: 'user', profile: {} };
-  saveUsers(users);
-  setCurrentUser(username);
-  return true;
+// =============================
+// ROLE CHECK (SERVER entscheidet)
+// =============================
+async function getMyRole() {
+  const res = await fetch(`${API_URL}/me`, {
+    headers: {
+      Authorization: "Bearer " + getToken()
+    }
+  });
+
+  if (!res.ok) return "guest";
+
+  const data = await res.json();
+  return data.role;
 }
 
-function loginUser(username, password){
-  const users = getUsers();
-  if(!users[username] || users[username].password !== password) return false;
-  setCurrentUser(username);
-  return true;
+// =============================
+// ADMIN CHECK
+// =============================
+async function isAdmin() {
+  return (await getMyRole()) === "admin";
 }
 
-function logout(){
-  clearCurrentUser();
-}
-
-function upgradeCurrentUserToPro(code){
-  const normalized = code ? code.trim().toUpperCase() : '';
-  if(!PRO_CODES.includes(normalized)) return false;
-  const username = getCurrentUser();
-  if(!username) return false;
-  const users = getUsers();
-  if(!users[username]) return false;
-  users[username].role = 'pro';
-  saveUsers(users);
-  return true;
-}
-
-function getUserDisplayName(){
-  const user = getCurrentUserData();
-  if(!user) return 'Gast';
-  return user.profile?.fullName || getCurrentUser();
-}
-
-function ensureAuthRedirect(target){
-  if(!isLoggedIn()){
-    window.location.href = target || 'login.html';
+// =============================
+// AUTH GUARD
+// =============================
+function ensureAuthRedirect(target = "login.html") {
+  if (!isLoggedIn()) {
+    window.location.href = target;
     return false;
   }
   return true;
