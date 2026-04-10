@@ -1,19 +1,20 @@
+<!DOCTYPE html>
+<html lang="de">
+<body>
+<h2>Registrieren</h2>
+
+<input id="u" placeholder="Username">
+<input id="p" type="password" placeholder="Passwort">
+<button id="regBtn">Registrieren</button>
+<p id="msg"></p>
+
 <script src="auth.js"></script>
 <script>
-  const message = document.getElementById("message");
-
-  document.getElementById("registerBtn").onclick = async () => {
-    const u = username.value.trim();
-    const p = password.value;
-
-    const res = await registerUser(u, p);
-    if (res.success) {
-      message.style.display = "block";
-      message.textContent = "Registrierung erfolgreich";
-      setTimeout(() => (location.href = "login.html"), 1200);
-    } else {
-      message.style.display = "block";
-      message.textContent = res.message;
-    }
-  };
+regBtn.onclick = async () => {
+  const r = await registerUser(u.value, p.value);
+  msg.textContent = r.success ? "Erfolgreich!" : r.message;
+  if (r.success) setTimeout(()=>location.href="login.html",1000);
+};
 </script>
+</body>
+</html>
