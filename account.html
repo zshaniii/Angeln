@@ -1,27 +1,9 @@
-async function renderProfile() {
-  if (!isLoggedIn()) {
-    showGuestState();
-    return;
+<script src="auth.js"></script>
+<script>
+  async function renderProfile() {
+    if (!isLoggedIn()) location.href = "login.html";
+    const role = await getMyRole();
+    document.getElementById("roleDisplay").textContent = "Rolle: " + role;
   }
-
-  const role = await getMyRole();
-
-  profileCard.style.display = 'block';
-  proCard.style.display = 'none';
-  guestCard.style.display = 'none';
-  logoutBtn.style.display = 'inline-flex';
-
-  profileName.textContent = 'Profilübersicht';
-  usernameDisplay.textContent = 'Angemeldet';
-  roleDisplay.textContent = `Rolle: ${role}`;
-
-  statusText.className = `status ${role}`;
-  statusText.textContent =
-    role === "admin"
-      ? "Administrator-Zugriff"
-      : role === "pro"
-        ? "Pro-Zugang aktiv"
-        : "Standard-Zugang";
-
-  membershipTag.textContent = role.toUpperCase();
-}
+  renderProfile();
+</script>
