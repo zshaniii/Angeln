@@ -1,7 +1,6 @@
 {
   "name": "angler-backend",
   "version": "1.0.0",
-  "description": "Sicheres Login Backend",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
