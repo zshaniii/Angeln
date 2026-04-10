@@ -1,27 +1,18 @@
+<script src="auth.js"></script>
 <script>
-  if (isLoggedIn()) {
-    window.location.href = 'account.html';
-  }
+  if (isLoggedIn()) window.location.href = "account.html";
 
-  const message = document.getElementById('message');
+  const message = document.getElementById("message");
 
-  document.getElementById('loginBtn').onclick = async () => {
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value;
+  document.getElementById("loginBtn").onclick = async () => {
+    const u = username.value.trim();
+    const p = password.value;
 
-    if (!username || !password) {
-      message.style.display = 'block';
-      message.textContent = 'Bitte Benutzernamen und Passwort eingeben.';
-      return;
-    }
-
-    const ok = await loginUser(username, password);
-
-    if (ok) {
-      window.location.href = 'account.html';
-    } else {
-      message.style.display = 'block';
-      message.textContent = 'Login fehlgeschlagen.';
+    const ok = await loginUser(u, p);
+    if (ok) window.location.href = "account.html";
+    else {
+      message.style.display = "block";
+      message.textContent = "Login fehlgeschlagen";
     }
   };
 </script>
