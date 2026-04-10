@@ -1,4 +1,4 @@
-const API_URL = "https://DEIN-SERVICE.onrender.com";
+const API_URL = "https://angeln.onrender.com";
 const TOKEN_KEY = "angler_auth_token";
 
 // Token
