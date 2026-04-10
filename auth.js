@@ -1,11 +1,12 @@
 const API_URL = "https://DEIN-SERVICE.onrender.com";
 const TOKEN_KEY = "angler_auth_token";
 
+// Token
 function getToken() {
   return localStorage.getItem(TOKEN_KEY);
 }
-function setToken(token) {
-  localStorage.setItem(TOKEN_KEY, token);
+function setToken(t) {
+  localStorage.setItem(TOKEN_KEY, t);
 }
 function clearToken() {
   localStorage.removeItem(TOKEN_KEY);
@@ -14,46 +15,45 @@ function isLoggedIn() {
   return !!getToken();
 }
 
-// LOGIN
+// Login
 async function loginUser(username, password) {
-  const res = await fetch(`${API_URL}/login`, {
+  const r = await fetch(`${API_URL}/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, password })
   });
-
-  if (!res.ok) return false;
-  const data = await res.json();
-  setToken(data.token);
+  if (!r.ok) return false;
+  const d = await r.json();
+  setToken(d.token);
   return true;
 }
 
-// REGISTER
+// Registrierung
 async function registerUser(username, password) {
-  const res = await fetch(`${API_URL}/register`, {
+  const r = await fetch(`${API_URL}/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, password })
   });
-
-  if (!res.ok) {
-    const err = await res.json();
-    return { success: false, message: err.error };
+  if (!r.ok) {
+    const e = await r.json();
+    return { success: false, message: e.error };
   }
   return { success: true };
 }
 
-// ROLE
+// Rolle
 async function getMyRole() {
-  const res = await fetch(`${API_URL}/me`, {
+  const r = await fetch(`${API_URL}/me`, {
     headers: { Authorization: "Bearer " + getToken() }
   });
-  if (!res.ok) return "guest";
-  const data = await res.json();
-  return data.role;
+  if (!r.ok) return "guest";
+  return (await r.json()).role;
 }
 
+// Logout
 function logout() {
   clearToken();
-  window.location.href = "login.html";
+  location.href = "login.html";
 }
+``
