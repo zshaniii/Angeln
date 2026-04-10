@@ -1,9 +1,14 @@
+<!DOCTYPE html>
+<html lang="de">
+<body>
+<h2>Konto</h2>
+<p id="role"></p>
+<button onclick="logout()">Logout</button>
+
 <script src="auth.js"></script>
 <script>
-  async function renderProfile() {
-    if (!isLoggedIn()) location.href = "login.html";
-    const role = await getMyRole();
-    document.getElementById("roleDisplay").textContent = "Rolle: " + role;
-  }
-  renderProfile();
+if(!isLoggedIn()) location.href="login.html";
+getMyRole().then(r=>role.textContent="Rolle: "+r);
 </script>
+</body>
+</html>
