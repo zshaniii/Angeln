@@ -1,7 +1,6 @@
 const API_URL = "https://angeln.onrender.com";
 const TOKEN_KEY = "angler_auth_token";
 
-// Token
 function getToken() {
   return localStorage.getItem(TOKEN_KEY);
 }
@@ -15,7 +14,7 @@ function isLoggedIn() {
   return !!getToken();
 }
 
-// Login
+// LOGIN
 async function loginUser(username, password) {
   const r = await fetch(`${API_URL}/login`, {
     method: "POST",
@@ -28,7 +27,7 @@ async function loginUser(username, password) {
   return true;
 }
 
-// Registrierung
+// REGISTER
 async function registerUser(username, password) {
   const r = await fetch(`${API_URL}/register`, {
     method: "POST",
@@ -42,16 +41,26 @@ async function registerUser(username, password) {
   return { success: true };
 }
 
-// Rolle
-async function getMyRole() {
-  const r = await fetch(`${API_URL}/me`, {
+// PROFIL
+async function loadProfile() {
+  const r = await fetch(`${API_URL}/profile`, {
     headers: { Authorization: "Bearer " + getToken() }
   });
-  if (!r.ok) return "guest";
-  return (await r.json()).role;
+  return r.ok ? await r.json() : null;
 }
 
-// Logout
+async function saveProfile(p) {
+  return fetch(`${API_URL}/profile`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + getToken()
+    },
+    body: JSON.stringify(p)
+  });
+}
+
+// LOGOUT
 function logout() {
   clearToken();
   location.href = "login.html";
