@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Angelspots</title>
+
+<!-- LEAFLET CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+<style>
+:root{
+  --bg:#262626; --text:#fff; --card:#333;
+  --shadow:rgba(0,0,0,.55); --icon:#fff;
+}
+html.light{
+  --bg:#e8edf1; --text:#1a1a1a; --card:#fff;
+  --icon:#000; --shadow:rgba(0,0,0,.15);
+}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+}
+
+/* ===== HEADER ===== */
+header{
+  position:sticky; top:0; z-index:50;
+  padding:14px 16px;
+  background:linear-gradient(180deg,rgba(0,0,0,.35),transparent);
+}
+.bar{
+  max-width:980px; margin:0 auto;
+  display:flex; align-items:center; justify-content:center;
+  position:relative;
+}
+.menu-btn{
+  position:absolute; left:0; top:50%; transform:translateY(-50%);
+  background:none; border:none; cursor:pointer; color:var(--text);
+}
+.menu-btn svg{ width:34px; height:34px; stroke:currentColor; }
+.logo{ font-size:22px; font-weight:700; }
+
+/* ===== MAP ===== */
+#map{ height:calc(100vh - 70px); }
+
+/* ===== SEARCH ===== */
+.search{
+  position:absolute; top:90px; left:50%;
+  transform:translateX(-50%);
+  width:90%; max-width:420px; z-index:500;
+}
+.search input{
+  width:100%; padding:12px;
+  border-radius:14px; border:none;
+  background:var(--card); color:var(--text);
+}
+
+/* ===== ADD BUTTON ===== */
+.add-btn{
+  position:absolute;
+  right:16px;
+  bottom:24px;
+  width:56px;
+  height:56px;
+  border-radius:18px;
+  background:#4c8bf5;
+  color:#fff;
+  border:none;
+  font-size:34px;
+  cursor:pointer;
+  box-shadow:0 10px 30px rgba(0,0,0,.6);
+  z-index:600;
+}
+
+/* ===== ADD MENU ===== */
+.add-menu{
+  position:absolute;
+  right:16px;
+  bottom:90px;
+  background:var(--card);
+  border-radius:14px;
+  box-shadow:0 8px 26px rgba(0,0,0,.55);
+  display:none;
+  flex-direction:column;
+  overflow:hidden;
+  z-index:600;
+}
+.add-menu button{
+  background:none;
+  border:none;
+  color:var(--text);
+  padding:12px 16px;
+  text-align:left;
+  font-size:15px;
+  cursor:pointer;
+}
+.add-menu button:hover{ background:#3a3a3a; }
+
+/* ===== OVERLAY + MENU ===== */
+.overlay{
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.6);
+  opacity:0; pointer-events:none;
+  transition:.25s; z-index:900;
+}
+.overlay.open{ opacity:1; pointer-events:auto; }
+
+.side-menu{
+  position:fixed; top:0; left:0; height:100vh;
+  width:50vw; max-width:520px; min-width:280px;
+  background:#333; border-right:1px solid #444;
+  transform:translateX(-100%);
+  transition:.28s ease; z-index:1000;
+}
+.side-menu.open{ transform:translateX(0); }
+
+.menu-header{
+  padding:14px 16px; border-bottom:1px solid #444;
+  display:flex; justify-content:space-between;
+}
+.menu-close{
+  background:none; border:1px solid #555;
+  color:#fff; border-radius:8px; padding:6px 10px;
+  cursor:pointer;
+}
+.menu-item{
+  padding:14px 16px; border-bottom:1px solid #444;
+  cursor:pointer;
+}
+.menu-item:hover{ background:#3a3a3a; }
+
+/* POPUP */
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip{
+  background:var(--card); color:var(--text);
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="bar">
+    <button class="menu-btn" id="menuButton">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <line x1="3" y1="12" x2="21" y2="12"/>
+        <line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+    <div class="logo">Angelspots</div>
+  </div>
+</header>
+
+<div class="search">
+  <input id="search" placeholder="Ort, Straße oder Gewässer suchen…">
+</div>
+
+<div id="map"></div>
+
+<button class="add-btn" id="addBtn">+</button>
+
+<div class="add-menu" id="addMenu">
+  <button onclick="startAdd('🎣')">🎣 Angelspot</button>
+  <button onclick="startAdd('🌊')">🌊 Gewässer</button>
+  <button onclick="startAdd('🛒')">🛒 Angelladen</button>
+</div>
+
+<div id="overlay" class="overlay"></div>
+
+<nav id="sideMenu" class="side-menu">
+  <div class="menu-header">
+    <strong>Menü</strong>
+    <button class="menu-close" id="menuClose">✕</button>
+  </div>
+  <div class="menu-item" onclick="location.href='index.html'">🌊 Gewässer</div>
+  <div class="menu-item">🛒 Angelläden</div>
+</nav>
+
+<!-- LEAFLET JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+/* ===== MENU ===== */
+const menuBtn = document.getElementById("menuButton");
+const sideMenu = document.getElementById("sideMenu");
+const overlay = document.getElementById("overlay");
+const menuClose = document.getElementById("menuClose");
+
+menuBtn.onclick = () => { sideMenu.classList.add("open"); overlay.classList.add("open"); };
+menuClose.onclick = overlay.onclick = () => {
+  sideMenu.classList.remove("open");
+  overlay.classList.remove("open");
+};
+
+/* ===== MAP ===== */
+const map = L.map("map").setView([51.5,10],6);
+L.tileLayer(
+  "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+  { maxZoom:19 }
+).addTo(map);
+
+/* ===== DATA ===== */
+let items = JSON.parse(localStorage.getItem("angelmap") || "[]");
+
+/* ===== DRAW ===== */
+function draw(){
+  map.eachLayer(l=>{ if(l instanceof L.Marker) map.removeLayer(l); });
+  items.forEach(i=>{
+    L.marker(i.pos)
+      .addTo(map)
+      .bindPopup(`<b>${i.icon} ${i.name}</b><br>${i.info}`);
+  });
+}
+draw();
+
+/* ===== ADD ===== */
+let addIcon = null;
+const addBtn = document.getElementById("addBtn");
+const addMenu = document.getElementById("addMenu");
+
+addBtn.onclick = () => {
+  addMenu.style.display = addMenu.style.display === "flex" ? "none" : "flex";
+};
+
+function startAdd(icon){
+  addIcon = icon;
+  addMenu.style.display = "none";
+  alert("Jetzt auf die Karte klicken");
+}
+
+map.on("click",e=>{
+  if(!addIcon) return;
+  const name = prompt("Name:");
+  if(!name) return;
+  const info = prompt("Infos:") || "";
+  items.push({ icon:addIcon, name, info, pos:[e.latlng.lat, e.latlng.lng] });
+  localStorage.setItem("angelmap", JSON.stringify(items));
+  addIcon = null;
+  draw();
+});
+
+/* ===== SEARCH ===== */
+document.getElementById("search").addEventListener("keydown",e=>{
+  if(e.key!=="Enter") return;
+  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(e.target.value)}`)
+    .then(r=>r.json())
+    .then(d=>{
+      if(d[0]) map.setView([d[0].lat,d[0].lon],14);
+    });
+});
+</script>
+
+</body>
+</html>

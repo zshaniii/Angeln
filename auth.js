@@ -1,68 +1,50 @@
-const API_URL = "https://angeln.onrender.com";
-const TOKEN_KEY = "angler_auth_token";
+const API = "https://angeln.onrender.com/api/auth";
 
-function getToken() {
-  return localStorage.getItem(TOKEN_KEY);
-}
-function setToken(t) {
-  localStorage.setItem(TOKEN_KEY, t);
-}
-function clearToken() {
-  localStorage.removeItem(TOKEN_KEY);
-}
-function isLoggedIn() {
-  return !!getToken();
-}
-
-// LOGIN
-async function loginUser(username, password) {
-  const r = await fetch(`${API_URL}/login`, {
+// ✅ REGISTRIEREN
+async function register(email, password) {
+  const res = await fetch(`${API}/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password })
+    body: JSON.stringify({ email, password })
   });
-  if (!r.ok) return false;
-  const d = await r.json();
-  setToken(d.token);
+
+  if (!res.ok) {
+    const e = await res.json();
+    alert(e.error || "Registrierung fehlgeschlagen");
+    return false;
+  }
   return true;
 }
 
-// REGISTER
-async function registerUser(username, password) {
-  const r = await fetch(`${API_URL}/register`, {
+// ✅ LOGIN
+async function login(email, password) {
+  const res = await fetch(`${API}/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password })
+    body: JSON.stringify({ email, password })
   });
-  if (!r.ok) {
-    const e = await r.json();
-    return { success: false, message: e.error };
+
+  const data = await res.json();
+  if (!res.ok) {
+    alert(data.error);
+    return false;
   }
-  return { success: true };
+
+  localStorage.setItem("token", data.token);
+  localStorage.setItem("role", data.role);
+  return true;
 }
 
-// PROFIL
-async function loadProfile() {
-  const r = await fetch(`${API_URL}/profile`, {
-    headers: { Authorization: "Bearer " + getToken() }
-  });
-  return r.ok ? await r.json() : null;
+// ✅ STATUS
+function isLoggedIn() {
+  return !!localStorage.getItem("token");
 }
 
-async function saveProfile(p) {
-  return fetch(`${API_URL}/profile`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: "Bearer " + getToken()
-    },
-    body: JSON.stringify(p)
-  });
+function isPro() {
+  return localStorage.getItem("role") === "pro";
 }
 
-// LOGOUT
 function logout() {
-  clearToken();
-  location.href = "login.html";
+  localStorage.clear();
+  window.location.href = "welcome.html";
 }
-``

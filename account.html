@@ -1,87 +1,236 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<title>Mein Profil</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mein Konto | Angler App</title>
 <style>
-body{margin:0;background:#262626;color:#fff;font-family:system-ui}
-.wrap{max-width:700px;margin:40px auto;padding:20px}
-.card{background:#333;padding:24px;border-radius:16px}
-label{display:block;margin-top:14px}
-input,textarea{width:100%;padding:10px;border-radius:10px;border:none}
-textarea{min-height:90px}
-button{margin-top:18px;width:100%;padding:12px;border:none;border-radius:12px;background:#4c8bf5;color:#fff}
-.avatar{width:120px;height:120px;border-radius:50%;object-fit:cover;margin:0 auto;display:block}
+:root{--bg:#262626;--text:#fff;--card:#333;--accent:#4c8bf5;--shadow:rgba(0,0,0,.55);--good:#2ecc71;--bad:#e74c3c;--muted:#c5c5c5;}
+html.light{--bg:#e8edf1;--text:#1a1a1a;--card:#fff;--accent:#2256c6;--shadow:rgba(0,0,0,.15);--muted:#666;}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;transition:.2s;}
+.main{max-width:900px;margin:40px auto;padding:24px;display:grid;gap:24px;}
+.card{background:var(--card);border-radius:24px;padding:24px;box-shadow:0 16px 40px rgba(0,0,0,.25);}
+.account-header{display:grid;gap:20px;}
+.header-content{display:flex;gap:24px;flex-wrap:wrap;align-items:center;}
+.avatar-frame{width:160px;min-width:160px;text-align:center;}
+.avatar-frame img{width:160px;height:160px;object-fit:cover;border-radius:24px;border:2px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);}
+.upload-label{display:inline-flex;align-items:center;justify-content:center;margin-top:14px;width:100%;padding:10px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);cursor:pointer;color:var(--text);font-size:14px;}
+.upload-label input{display:none;}
+.header-text h1{margin:0 0 8px;font-size:32px;}
+.header-text p{margin:6px 0;color:var(--muted);}
+.status{margin:0;padding:18px;border-radius:18px;background:rgba(255,255,255,.05);font-size:15px;line-height:1.6;}
+.status.pro{border:1px solid rgba(46,204,113,.4);}
+.status.user{border:1px solid rgba(52,152,219,.4);}
+.status.guest{border:1px solid rgba(231,76,60,.4);}
+.profile-grid{display:grid;gap:18px;}
+.field{display:grid;gap:8px;}
+label{font-size:14px;color:var(--muted);}
+input,textarea{width:100%;padding:14px 16px;border-radius:16px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);color:var(--text);font-size:15px;}
+textarea{min-height:120px;resize:vertical;}
+button{display:inline-flex;align-items:center;justify-content:center;padding:14px 20px;border:none;border-radius:16px;background:var(--accent);color:#fff;font-size:16px;cursor:pointer;transition:.2s;}
+button:hover{background:#3c98f3;}
+.secondary-btn{background:rgba(255,255,255,.08);color:var(--text);border:1px solid rgba(255,255,255,.12);}
+.secondary-btn:hover{background:rgba(255,255,255,.12);}
+.hint{margin-top:14px;color:var(--muted);font-size:14px;line-height:1.5;}
+.alert{margin-top:14px;padding:14px 16px;border-radius:16px;background:rgba(76,139,245,.12);border:1px solid rgba(76,139,245,.24);color:var(--text);}
+.logout-btn{background:var(--bad);}
+.logout-btn:hover{background:#c0392b;}
+.card-grid{display:grid;gap:20px;}
+.profile-actions{display:flex;flex-wrap:wrap;gap:14px;align-items:center;}
+.link{display:inline-flex;color:var(--accent);text-decoration:none;align-items:center;}
+@media(max-width:680px){.header-content{flex-direction:column;align-items:flex-start;}.avatar-frame{width:100%;min-width:auto;}.header-text h1{font-size:28px;}}
 </style>
 </head>
-
 <body>
-<div class="wrap">
-  <div class="card">
-    <h2>Mein Profil</h2>
+<div class="main">
+  <div class="card account-header">
+    <div class="profile-actions">
+      <button class="secondary-btn" id="backBtn">← Zur Startseite</button>
+      <span id="membershipTag" class="hint"></span>
+    </div>
+    <div class="header-content">
+      <div class="avatar-frame">
+        <img id="avatarPreview" alt="Profilfoto" src="" />
+        <label class="upload-label">Profilfoto ändern
+          <input type="file" id="avatarInput" accept="image/*" />
+        </label>
+      </div>
+      <div class="header-text">
+        <h1 id="profileName">Profilübersicht</h1>
+        <p id="usernameDisplay"></p>
+        <p id="roleDisplay"></p>
+        <p id="statusText" class="status"></p>
+      </div>
+    </div>
+  </div>
 
-    <img id="avatarPreview" class="avatar">
-    <input type="file" id="avatarInput">
+  <div class="card" id="profileCard">
+    <h2>Persönliche Daten</h2>
+    <div class="profile-grid">
+      <div class="field">
+        <label>Benutzername</label>
+        <input type="text" id="usernameField" readonly />
+      </div>
+      <div class="field">
+        <label for="fullName">Vollständiger Name</label>
+        <input id="fullName" placeholder="Max Mustermann" />
+      </div>
+      <div class="field">
+        <label for="email">E-Mail</label>
+        <input id="email" type="email" placeholder="max@example.com" />
+      </div>
+      <div class="field">
+        <label for="location">Ort</label>
+        <input id="location" placeholder="Musterstadt" />
+      </div>
+      <div class="field">
+        <label for="bio">Kurzbeschreibung</label>
+        <textarea id="bio" placeholder="Erzähle etwas über dich"></textarea>
+      </div>
+      <button type="button" id="saveBtn">Profil speichern</button>
+      <p class="hint">Deine Profildaten bleiben lokal auf diesem Gerät. Es ist keine Cloud-Synchronisation aktiv.</p>
+    </div>
+  </div>
 
-    <label>Name</label>
-    <input id="fullName">
+  <div class="card" id="proCard">
+    <h2>Pro-Zugang</h2>
+    <div id="proText" class="status"></div>
+    <div id="proForm"></div>
+  </div>
 
-    <label>E‑Mail</label>
-    <input id="email">
+  <div class="card" id="guestCard" style="display:none;">
+    <h2>Kein Konto aktiv</h2>
+    <p class="hint">Bitte melde dich an, um dein Profil zu sehen und zu bearbeiten.</p>
+    <div class="profile-actions">
+      <button class="secondary-btn" onclick="go('login.html')">Anmelden</button>
+      <button class="secondary-btn" onclick="go('register.html')">Registrieren</button>
+    </div>
+  </div>
 
-    <label>Ort</label>
-    <input id="location">
-
-    <label>Über mich</label>
-    <textarea id="bio"></textarea>
-
-    <button id="saveBtn">Profil speichern</button>
-    <button onclick="logout()">Abmelden</button>
+  <div class="card profile-actions" id="footerActions">
+    <button id="logoutBtn" class="logout-btn">Abmelden</button>
+    <a class="link" href="index.html">Zur Startseite</a>
   </div>
 </div>
-
 <script src="auth.js"></script>
 <script>
-if (!isLoggedIn()) location.href = "login.html";
+const DEFAULT_AVATAR = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="160" height="160"%3E%3Crect width="160" height="160" fill="%23333"/%3E%3Ccircle cx="80" cy="52" r="28" fill="%2388b7ff"/%3E%3Cpath d="M32 132c0-24 28-34 28-34s28 10 28 34" fill="none" stroke="%2388b7ff" stroke-width="10" stroke-linecap="round"/%3E%3C/svg%3E';
+let avatarPending = '';
+const backBtn = document.getElementById('backBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+const profileCard = document.getElementById('profileCard');
+const proCard = document.getElementById('proCard');
+const guestCard = document.getElementById('guestCard');
+const profileName = document.getElementById('profileName');
+const usernameDisplay = document.getElementById('usernameDisplay');
+const roleDisplay = document.getElementById('roleDisplay');
+const statusText = document.getElementById('statusText');
+const membershipTag = document.getElementById('membershipTag');
+const usernameField = document.getElementById('usernameField');
+const fullNameField = document.getElementById('fullName');
+const emailField = document.getElementById('email');
+const locationField = document.getElementById('location');
+const bioField = document.getElementById('bio');
+const avatarInput = document.getElementById('avatarInput');
+const avatarPreview = document.getElementById('avatarPreview');
+const saveBtn = document.getElementById('saveBtn');
+const proText = document.getElementById('proText');
+const proForm = document.getElementById('proForm');
 
-let avatarData = "";
-
-async function init() {
-  const p = await loadProfile();
-  if (!p) return;
-  fullName.value = p.fullName || "";
-  email.value = p.email || "";
-  location.value = p.location || "";
-  bio.value = p.bio || "";
-  avatarPreview.src = p.avatar || "";
-  avatarData = p.avatar || "";
+function go(u){ window.location.href = u; }
+function showGuestState(){
+  profileCard.style.display = 'none';
+  proCard.style.display = 'none';
+  guestCard.style.display = 'block';
+  logoutBtn.style.display = 'none';
+  membershipTag.textContent = 'Gast';
+  profileName.textContent = 'Gastprofil';
+  usernameDisplay.textContent = '';
+  roleDisplay.textContent = '';
+  statusText.textContent = 'Du bist nicht angemeldet.';
+  statusText.className = 'status guest';
 }
 
-avatarInput.onchange = () => {
-  const f = avatarInput.files[0];
-  if (!f) return;
-  const r = new FileReader();
-  r.onload = () => {
-    avatarPreview.src = r.result;
-    avatarData = r.result;
+function renderProfile(){
+  if(!isLoggedIn()){ showGuestState(); return; }
+  const profile = getCurrentUserProfile();
+  const username = getCurrentUser();
+  const role = getUserRole();
+  profileCard.style.display = 'block';
+  proCard.style.display = 'block';
+  guestCard.style.display = 'none';
+  logoutBtn.style.display = 'inline-flex';
+
+  profileName.textContent = profile.fullName || 'Profilübersicht';
+  usernameDisplay.textContent = `Benutzername: ${username}`;
+  roleDisplay.textContent = `Rolle: ${role}`;
+  statusText.textContent = 'Bearbeite dein Profil oder lade ein Bild hoch.';
+  statusText.className = `status ${role}`;
+  membershipTag.textContent = isPro() ? 'Pro-Mitglied' : 'Standardzugang';
+
+  usernameField.value = username;
+  fullNameField.value = profile.fullName || '';
+  emailField.value = profile.email || '';
+  locationField.value = profile.location || '';
+  bioField.value = profile.bio || '';
+  avatarPreview.src = profile.avatar || DEFAULT_AVATAR;
+  avatarPending = '';
+
+  if(isPro()){
+    proText.textContent = 'Du hast bereits Pro-Zugang. Vielen Dank!';
+    proForm.innerHTML = '';
+  } else {
+    proText.textContent = 'Mit einem Pro-Code kannst du zusätzliche Funktionen freischalten.';
+    proForm.innerHTML = `
+      <label for="proCode">Pro-Code</label>
+      <input id="proCode" placeholder="Code eingeben" />
+      <button id="proBtn" type="button">Pro freischalten</button>
+    `;
+    document.getElementById('proBtn').onclick = () => {
+      const code = document.getElementById('proCode').value.trim();
+      if(upgradeCurrentUserToPro(code)){
+        renderProfile();
+        alert('Pro-Zugang aktiviert!');
+      } else {
+        alert('Ungültiger Pro-Code.');
+      }
+    };
+  }
+}
+
+avatarInput.addEventListener('change', (event) => {
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    avatarPreview.src = reader.result;
+    avatarPending = reader.result;
   };
-  r.readAsDataURL(f);
-};
+  reader.readAsDataURL(file);
+});
 
-saveBtn.onclick = async () => {
-  await saveProfile({
-    fullName: fullName.value,
-    email: email.value,
-    location: location.value,
-    bio: bio.value,
-    avatar: avatarData
-  });
-  alert("Profil gespeichert ✅");
-};
+saveBtn.addEventListener('click', () => {
+  if(!isLoggedIn()) return;
+  const updates = {
+    fullName: fullNameField.value.trim(),
+    email: emailField.value.trim(),
+    location: locationField.value.trim(),
+    bio: bioField.value.trim()
+  };
+  if(avatarPending){
+    updates.avatar = avatarPending;
+  }
+  saveCurrentUserProfile(updates);
+  statusText.textContent = 'Profil gespeichert.';
+  statusText.className = 'status user';
+  renderProfile();
+});
 
-init();
+logoutBtn.addEventListener('click', () => { logout(); go('index.html'); });
+backBtn.addEventListener('click', () => { go('index.html'); });
+
+renderProfile();
 </script>
 </body>
 </html>
-``

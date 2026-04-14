@@ -1,122 +1,62 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Anmelden | Angler App</title>
-
-  <style>
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #262626;
-      color: #fff;
-      font-family: system-ui, sans-serif;
-    }
-
-    .card {
-      background: #333;
-      padding: 24px;
-      border-radius: 16px;
-      width: 100%;
-      max-width: 360px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.5);
-    }
-
-    h1 {
-      margin-top: 0;
-      text-align: center;
-    }
-
-    label {
-      display: block;
-      margin-top: 14px;
-      font-size: 14px;
-    }
-
-    input {
-      width: 100%;
-      padding: 12px;
-      margin-top: 6px;
-      border-radius: 10px;
-      border: none;
-      font-size: 15px;
-    }
-
-    button {
-      width: 100%;
-      margin-top: 18px;
-      padding: 14px;
-      border-radius: 12px;
-      border: none;
-      background: #4c8bf5;
-      color: white;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    .msg {
-      margin-top: 14px;
-      text-align: center;
-    }
-
-    .link {
-      margin-top: 16px;
-      text-align: center;
-      font-size: 14px;
-    }
-
-    .link a {
-      color: #4c8bf5;
-      text-decoration: none;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Login | Angler App</title>
+<style>
+:root{--bg:#262626;--text:#fff;--card:#333;--accent:#4c8bf5;--shadow:rgba(0,0,0,.55);}
+html.light{--bg:#e8edf1;--text:#1a1a1a;--card:#fff;--accent:#2256c6;--shadow:rgba(0,0,0,.15);}
+*,*::before,*::after{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;transition:.2s;}
+.main{max-width:480px;margin:64px auto;padding:24px;}
+.card{background:var(--card);border-radius:18px;padding:24px;box-shadow:0 16px 40px rgba(0,0,0,.25);}
+h1{margin-top:0;font-size:28px;}
+.form-grid{display:grid;gap:18px;}
+.field{display:grid;gap:8px;}
+label{display:block;margin:0;font-size:14px;color:var(--muted);}
+input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.15);background:transparent;color:var(--text);font-size:15px;}
+button{width:100%;padding:14px;border:none;border-radius:12px;background:var(--accent);color:#fff;font-size:16px;cursor:pointer;margin-top:8px;}
+.footer{margin-top:16px;text-align:center;color:var(--muted);}
+.footer a{color:var(--accent);text-decoration:none;}
+.message{margin:12px 0;padding:12px;border-radius:12px;background:rgba(255,255,255,.08);}
+</style>
 </head>
 <body>
-
+<div class="main">
   <div class="card">
-    <h1>Anmelden</h1>
-
-    <label>Benutzername</label>
-    <input id="username">
-
-    <label>Passwort</label>
-    <input id="password" type="password">
-
-    <button id="loginBtn">Einloggen</button>
-
-    <div class="msg" id="msg"></div>
-
-    <div class="link">
-      Noch kein Konto?
-      <a href="register.html">Registrieren</a>
+    <h1>Login</h1>
+    <div id="message" class="message" style="display:none"></div>
+    <div class="form-grid">
+      <div class="field">
+        <label for="username">Benutzername</label>
+        <input id="username" autocomplete="username" />
+      </div>
+      <div class="field">
+        <label for="password">Passwort</label>
+        <input id="password" type="password" autocomplete="current-password" />
+      </div>
+      <button id="loginBtn">Einloggen</button>
     </div>
+    <div class="footer">Noch kein Konto? <a href="register.html">Registrieren</a></div>
   </div>
-
-  <script src="auth.js"></script>
-  <script>
-    if (isLoggedIn()) {
-      location.href = "account.html";
+</div>
+<script src="auth.js"></script>
+<script>
+  if(isLoggedIn()){
+    window.location.href='account.html';
+  }
+  const message = document.getElementById('message');
+  document.getElementById('loginBtn').onclick = ()=>{
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    if(!username || !password){ message.style.display='block'; message.textContent='Bitte Benutzernamen und Passwort eingeben.'; return; }
+    if(loginUser(username,password)){
+      window.location.href='account.html';
+    } else {
+      message.style.display='block'; message.textContent='Login fehlgeschlagen. Bitte prüfen.';
     }
-
-    loginBtn.onclick = async () => {
-      msg.textContent = "Anmelden …";
-
-      const ok = await loginUser(
-        username.value.trim(),
-        password.value
-      );
-
-      if (ok) {
-        location.href = "account.html";
-      } else {
-        msg.textContent = "Login fehlgeschlagen";
-      }
-    };
-  </script>
-
+  };
+</script>
 </body>
 </html>
