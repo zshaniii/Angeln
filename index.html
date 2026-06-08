@@ -324,12 +324,9 @@ html.dark .btn-card{ background:#2f2f2f; }
       if(authBtn){
         authBtn.textContent = loggedIn ? 'Mein Konto' : 'Anmelden';
       }
-      document.querySelectorAll('.btn-card.role-user').forEach(el=>{
-        el.style.display = (getUserRole() === 'user' || getUserRole() === 'pro') ? 'grid' : 'none';
-      });
-      document.querySelectorAll('.btn-card.role-pro').forEach(el=>{
-        el.style.display = getUserRole() === 'pro' ? 'grid' : 'none';
-      });
+      // Show all role-specific cards to everyone (remove role restrictions)
+      document.querySelectorAll('.btn-card.role-user').forEach(el=>{ el.style.display = 'grid'; });
+      document.querySelectorAll('.btn-card.role-pro').forEach(el=>{ el.style.display = 'grid'; });
     }
 
     /* THEME SWITCH */
