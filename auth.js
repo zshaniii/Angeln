@@ -1,50 +1,44 @@
-const API = "https://angeln.onrender.com/api/auth";
+(function(){
+  // Client-side auth helpers: grant full access to all features for guests.
 
-// ✅ REGISTRIEREN
-async function register(email, password) {
-  const res = await fetch(`${API}/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password })
-  });
+  function isLoggedIn(){ return true; }
+  function getCurrentUser(){ return localStorage.getItem('user') || 'Gast'; }
+  function getUserRole(){ return 'pro'; }
+  function isPro(){ return true; }
 
-  if (!res.ok) {
-    const e = await res.json();
-    alert(e.error || "Registrierung fehlgeschlagen");
-    return false;
+  function loginUser(username,password){
+    if(username) localStorage.setItem('user', username);
+    return true;
   }
-  return true;
-}
-
-// ✅ LOGIN
-async function login(email, password) {
-  const res = await fetch(`${API}/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password })
-  });
-
-  const data = await res.json();
-  if (!res.ok) {
-    alert(data.error);
-    return false;
+  function logout(){ localStorage.removeItem('user'); }
+  function registerUser(username,email,password){
+    if(username) localStorage.setItem('user', username);
+    return true;
   }
 
-  localStorage.setItem("token", data.token);
-  localStorage.setItem("role", data.role);
-  return true;
-}
+  // Access helpers used across the app — always allow.
+  function canAccessProbePruefung(){ return true; }
+  function canAccessPruefungsfragen(){ return true; }
+  function canAccessFischkundeLevel(level){ return true; }
+  function canAccessRutenbauRoute(){ return true; }
 
-// ✅ STATUS
-function isLoggedIn() {
-  return !!localStorage.getItem("token");
-}
+  // Rutenbau usage helpers (no-op/allow)
+  function getRutenbauRoutesRemaining(){ return 999; }
+  function registerRutenbauRoute(){ /* no-op: unlimited for guests */ }
 
-function isPro() {
-  return localStorage.getItem("role") === "pro";
-}
+  window.isLoggedIn = isLoggedIn;
+  window.getCurrentUser = getCurrentUser;
+  window.getUserRole = getUserRole;
+  window.isPro = isPro;
+  window.loginUser = loginUser;
+  window.logout = logout;
+  window.registerUser = registerUser;
 
-function logout() {
-  localStorage.clear();
-  window.location.href = "welcome.html";
-}
+  window.canAccessProbePruefung = canAccessProbePruefung;
+  window.canAccessPruefungsfragen = canAccessPruefungsfragen;
+  window.canAccessFischkundeLevel = canAccessFischkundeLevel;
+  window.canAccessRutenbauRoute = canAccessRutenbauRoute;
+
+  window.getRutenbauRoutesRemaining = getRutenbauRoutesRemaining;
+  window.registerRutenbauRoute = registerRutenbauRoute;
+})();
