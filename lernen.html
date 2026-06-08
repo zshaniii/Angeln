@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -372,9 +372,8 @@ header{
 function go(u){ window.location.href = u; }
 
 document.addEventListener('DOMContentLoaded', ()=>{
-  document.querySelectorAll('.btn-card.role-pro').forEach(el=>{
-    el.style.display = canAccessProbePruefung() ? 'grid' : 'none';
-  });
+  // Ensure pro-only cards are visible to all users
+  document.querySelectorAll('.btn-card.role-pro').forEach(el=>{ el.style.display = 'grid'; });
 });
 
 /* Menü */
