@@ -2031,11 +2031,7 @@
   }
 
   function neueFrage(){
-    if(!canAccessPruefungsfragen()){
-      updateQuizInfo();
-      disableQuiz("Du hast dein Tageslimit erreicht. Bitte melde dich an oder versuche es morgen erneut.");
-      return;
-    }
+   
 
     if(deck.length === 0) neuesDeck();
     const idx = deck.pop();
@@ -2088,47 +2084,89 @@
   }
 
   /* Prüfen */
-  function pruefen(){
-    if(gewaehlt === -1){
-      const r = document.getElementById("result");
-      r.textContent = "Bitte erst eine Antwort auswählen.";
-      r.style.color = "gold";
-      return;
-    }
-
-    const btns = [...document.querySelectorAll("#answers .choice")];
-    const r = document.getElementById("result");
-
-    btns.forEach(b=>b.disabled = true);
-
-    btns[aktuelle.korrekt].classList.add("correct");
-
-    if(gewaehlt !== aktuelle.korrekt){
-      btns[gewaehlt].classList.add("wrong");
-      r.textContent = "Falsch! Richtig ist: " + aktuelle.antworten[aktuelle.korrekt];
-      r.style.color = "salmon";
-    } else {
-      r.textContent = "Richtig!";
-      r.style.color = "lightgreen";
-    }
-
-    registerDailyUsage('pruefungsfragen');
-    updateQuizInfo();
-
-    document.getElementById("btnPruefen").disabled = true;
-    document.getElementById("btnWeiter").disabled = false;
-  }
-
-  document.getElementById("btnPruefen").onclick = pruefen;
-  document.getElementById("btnWeiter").onclick  = neueFrage;
-
-  neuesDeck();
-  if(canAccessPruefungsfragen()){
-    neueFrage();
-  } else {
-    updateQuizInfo();
-    disableQuiz("Du hast dein Tageslimit erreicht. Bitte melde dich an oder versuche es morgen erneut.");
-  }
+2
+function pruefen(){
+3
+if(gewaehlt === -1){
+4
+const r = document.getElementById("result");
+5
+r.textContent = "Bitte erst eine Antwort auswählen.";
+6
+r.style.color = "gold";
+7
+return;
+8
+}
+9
+ 
+10
+const btns = [...document.querySelectorAll("#answers .choice")];
+11
+const r = document.getElementById("result");
+12
+ 
+13
+btns.forEach(b => b.disabled = true);
+14
+ 
+15
+btns[aktuelle.korrekt].classList.add("correct");
+16
+ 
+17
+if(gewaehlt !== aktuelle.korrekt){
+18
+btns[gewaehlt].classList.add("wrong");
+19
+r.textContent =
+20
+"Falsch! Richtig ist: " +
+21
+aktuelle.antworten[aktuelle.korrekt];
+22
+r.style.color = "salmon";
+23
+} else {
+24
+r.textContent = "Richtig!";
+25
+r.style.color = "lightgreen";
+26
+}
+27
+ 
+28
+document.getElementById("btnPruefen").disabled = true;
+29
+document.getElementById("btnWeiter").disabled = false;
+30
+}
+31
+ 
+32
+/* Buttons */
+33
+document.getElementById("btnPruefen").addEventListener("click", pruefen);
+34
+ 
+35
+document.getElementById("btnWeiter").addEventListener("click", function () {
+36
+document.getElementById("result").textContent = "";
+37
+neueFrage();
+38
+});
+39
+ 
+40
+/* Start */
+41
+neuesDeck();
+42
+neueFrage();
+ 
   </script>
 
   </body>
